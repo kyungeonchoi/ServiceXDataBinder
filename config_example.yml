@@ -1,0 +1,18 @@
+General:
+  ServiceXBackendName: uproot
+  OutputDirectory: /Users/kchoi/ServiceX/ServiceXDataBinder/ServiceXData2
+  OutputFormat: parquet
+  IgnoreServiceXCache: True
+  
+Sample:
+  - Name: "ttH"
+    GridDID: "user.mgeyik:user.mgeyik.mc16_13TeV.346344.PhPy8EG_ttH125_1l.SGTOP1.e7148_a875_r9364_p4346.ll.b_out.root"
+    Tree: "nominal"
+    Filter: ""
+    Columns: "jet_m, jet_e, jet_pt, weight_mc"
+    # FuncAdlQuery: ""
+  - Name: "ttW"
+    GridDID: "user.mgeyik:user.mgeyik.mc16_13TeV.410155.aMCPy8EG_ttW.SGTOP1.e5070_s3126_r10724_p4346.ll.b_out.root"
+    Tree: "nominal"
+    Filter: ""
+    Columns: "jet_e, jet_pt"
