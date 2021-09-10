@@ -22,7 +22,7 @@ class ServiceXRequest():
             requests_sample.append(
                 {
                 'Sample': sample['Name'],
-                'gridDID': did,
+                'gridDID': did.strip(),
                 'query': query
                 }
             )
