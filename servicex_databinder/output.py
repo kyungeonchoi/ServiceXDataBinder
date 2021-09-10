@@ -32,7 +32,7 @@ def _output_handler(config:Dict[str, Any], request, output) -> None:
     samples = [sample['Name'] for sample in config['Sample']]
 
     # Uproot + parquet
-    if config['General']['OutputFormat'] == "parquet" and config['General']['ServiceXBackendName'] == "uproot":
+    if config['General']['OutputFormat'] == "parquet" and config['General']['ServiceXBackendName'].lower() == "uproot":
         for sample in samples:
             Path(f"{output_path}/{sample}").mkdir(parents=False, exist_ok=True)
             for req, out in zip(request, output):

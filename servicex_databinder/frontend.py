@@ -4,6 +4,10 @@ from aiohttp import ClientSession
 import nest_asyncio
 from typing import Any, Dict, List, Optional, Union
 
+# import sys
+# sys.path.insert(1,"/Users/kchoi/ServiceX/ServiceX_frontend")
+# from servicex import ServiceXDataset
+
 class ServiceXFrontend:
 
     def __init__(self, config: Dict[str, Any], servicex_requests):
@@ -24,6 +28,9 @@ class ServiceXFrontend:
         async def bound_get_data(sem, sx_ds, query):
             async with sem:
                 return await sx_ds.get_data_parquet_async(query)
+        # async def bound_get_data(sem, sx_ds, query, sample):
+        #     async with sem:
+        #         return await sx_ds.get_data_parquet_async(selection_query=query, title=sample)
 
         async def _get_my_data():
             sem = asyncio.Semaphore(50) # Limit maximum concurrent ServiceX requests
@@ -37,6 +44,8 @@ class ServiceXFrontend:
                         session_generator=session, \
                         ignore_cache=self._config['General']['IgnoreServiceXCache'])
                     query = request['query']
+
+                    # task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query, request['Sample']))
                     task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query))
                     tasks.append(task)
                 return await asyncio.gather(*tasks)
