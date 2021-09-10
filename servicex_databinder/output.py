@@ -38,7 +38,6 @@ def _output_handler(config:Dict[str, Any], request, output) -> None:
             for req, out in zip(request, output):
                 if req['Sample'] == sample:
                     for src in out: copy(src, f"{output_path}/{sample}")
-                    # print(f"{sample} - {out}")
 
     print(f'4/4 Done')
         

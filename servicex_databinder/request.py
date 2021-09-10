@@ -6,21 +6,28 @@ class ServiceXRequest():
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
 
+
     def get_requests(self) -> List:
         list_requests = []
-
         for sample in self._config.get('Sample'):
             list_requests.append(self._build_request(sample))
+        return [request for x in list_requests for request in x] # flatten nested lists
 
-        return list_requests
 
     def _build_request(self, sample: Dict) -> Dict:
+        requests_sample = []
         query = self._build_query(sample)
-        return {
-            'Sample': sample['Name'],
-            'gridDID': sample['GridDID'],
-            'query': query
-        }
+        
+        for did in sample['GridDID'].split(','):
+            requests_sample.append(
+                {
+                'Sample': sample['Name'],
+                'gridDID': did,
+                'query': query
+                }
+            )
+        return requests_sample
+        
 
     def _build_query(self, sample: Dict) -> str:
         query = tq.translate(
