@@ -30,6 +30,7 @@ class ServiceXRequest():
         
 
     def _build_query(self, sample: Dict) -> str:
+        if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
         query = tq.translate(
             sample['Tree'],
             sample['Columns'],
