@@ -34,7 +34,8 @@ setuptools.setup(name="servicex_databinder",
                     "servicex>=2.4",
                     "tcut-to-qastle>=0.6",                    
                     "nest-asyncio>=1.5.1",                
-                    "tqdm>=4.60.0"
+                    "tqdm>=4.60.0",
+                    "pyarrow>=3.0.0"
                     ],
                  classifiers=[
                     "Development Status :: 3 - Alpha",
