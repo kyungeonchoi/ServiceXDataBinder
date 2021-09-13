@@ -1,10 +1,12 @@
 from pathlib import Path
 from shutil import copy
-from typing import Dict, Any
+from typing import Dict, Any, List
+from glob import glob
+import re
 
 
 
-def _output_handler(config:Dict[str, Any], request, output) -> None:
+def _output_handler(config:Dict[str, Any], request, output) -> Dict[str,List]:
     """ 
     Manage ServiceX delivered outputs 
     uproot + parquet: create subdirectory for each sample and copy parquet files
@@ -31,13 +33,22 @@ def _output_handler(config:Dict[str, Any], request, output) -> None:
     # List of Samples
     samples = [sample['Name'] for sample in config['Sample']]
 
+    out_paths = {}
     # Uproot + parquet
     if config['General']['OutputFormat'] == "parquet" and config['General']['ServiceXBackendName'].lower() == "uproot":
-        for sample in samples:
-            Path(f"{output_path}/{sample}").mkdir(parents=False, exist_ok=True)
-            for req, out in zip(request, output):
-                if req['Sample'] == sample:
-                    for src in out: copy(src, f"{output_path}/{sample}")
 
+        def get_tree_name(query:str) -> str:
+            o = re.search(r"ServiceXDatasetSource' '\w+'", query)
+            return o.group(0).split(" ")[1].strip("\"").replace("'","")
+
+        for sample in samples:
+            for req, out in zip(request, output):                
+                if req['Sample'] == sample:
+                    Path(f"{output_path}/{sample}/{get_tree_name(req['query'])}/").mkdir(parents=True, exist_ok=True)
+                    for src in out: copy(src, f"{output_path}/{sample}/{get_tree_name(req['query'])}/")
+            out_paths[sample] = glob(f"{config['General']['OutputDirectory']}/{sample}/{get_tree_name(req['query'])}/*")
+    
     print(f'4/4 Done')
+    return out_paths
+    
         

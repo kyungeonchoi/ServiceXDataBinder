@@ -23,4 +23,4 @@ class DataBinder:
         output_parquet_list = sx.get_servicex_data()
 
         # Handles ServiceX delivered output
-        _output_handler(self._config, self._request.get_requests(), output_parquet_list)
+        return _output_handler(self._config, self._request.get_requests(), output_parquet_list)
