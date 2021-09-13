@@ -1,5 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
 import tcut_to_qastle as tq
+import qastle
+import ast
+
 
 class ServiceXRequest():
     """Prepare ServiceX requests"""
@@ -30,10 +33,15 @@ class ServiceXRequest():
         
 
     def _build_query(self, sample: Dict) -> str:
-        if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
-        query = tq.translate(
-            sample['Tree'],
-            sample['Columns'],
-            sample['Filter']
-        )
-        return query
+        """ Option Columns for TCut syntax and Option FuncADL for func-adl syntax"""
+        if 'Columns' in sample:
+            if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
+            query = tq.translate(
+                sample['Tree'],
+                sample['Columns'],
+                sample['Filter']
+            )
+            return query
+        elif 'FuncADL' in sample:
+            query = f"EventDataset('ServiceXDatasetSource', '{sample['Tree']}')." + sample['FuncADL']
+            return qastle.python_ast_to_text_ast(qastle.insert_linq_nodes(ast.parse(query)))
