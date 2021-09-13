@@ -45,13 +45,13 @@ The following settings are available options:
 | `Name`   | sample name defined by a user |
 | `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |
 | `Tree` | Name of the input ROOT `TTree` |
-| `Filter`$^{1}$ | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0`  |
-| `Columns`$^{1}$ | List of columns (or branches) to be delivered; multiple columns separately by comma |
-| `FuncADL`$^{2}$ | func-adl expression for a given sample |
+| `Filter`<sup>1</sup> | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0`  |
+| `Columns`<sup>1</sup> | List of columns (or branches) to be delivered; multiple columns separately by comma |
+| `FuncADL`<sup>2</sup> | func-adl expression for a given sample |
 
-$^{1}$ Options for TCut syntax (CANNOT combine with the option `FuncADL`)
+<sup>1</sup> Options for TCut syntax (CANNOT combine with the option `FuncADL`)
 
-$^{2}$ Option for func-adl expression (CANNOT combine with the option `Fitler` and `Columns`)
+<sup>2</sup> Option for func-adl expression (CANNOT combine with the option `Fitler` and `Columns`)
 
 <!-- ## Installation
 
