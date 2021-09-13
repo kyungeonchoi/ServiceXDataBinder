@@ -44,8 +44,13 @@ def _output_handler(config:Dict[str, Any], request, output) -> Dict[str,List]:
         for sample in samples:
             for req, out in zip(request, output):                
                 if req['Sample'] == sample:
-                    Path(f"{output_path}/{sample}/{get_tree_name(req['query'])}/").mkdir(parents=True, exist_ok=True)
-                    for src in out: copy(src, f"{output_path}/{sample}/{get_tree_name(req['query'])}/")
+                    out_path = f"{output_path}/{sample}/{get_tree_name(req['query'])}/"
+                    if Path(out_path).exists():
+                        for file in Path(out_path).glob('*root'):
+                            file.unlink()
+                    else:
+                        Path(out_path).mkdir(parents=True, exist_ok=True)
+                    for src in out: copy(src, out_path)
             out_paths[sample] = {}
             out_paths[sample][get_tree_name(req['query'])] = glob(f"{config['General']['OutputDirectory']}/{sample}/{get_tree_name(req['query'])}/*")
     
