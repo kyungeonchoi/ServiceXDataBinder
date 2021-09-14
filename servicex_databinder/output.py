@@ -3,6 +3,7 @@ from shutil import copy
 from typing import Dict, Any, List
 from glob import glob
 import re
+import yaml
 
 
 
@@ -57,6 +58,10 @@ def _output_handler(config:Dict[str, Any], request, output) -> Dict[str,List]:
             out_paths[sample] = {}
             out_paths[sample][get_tree_name(req['query'])] = glob(f"{config['General']['OutputDirectory']}/{sample}/{get_tree_name(req['query'])}/*")
     
+    if 'WriteOutputDict' in config['General'].keys():
+        with open(f"{config['General']['WriteOutputDict']}.yml", 'w') as outfile:
+            yaml.dump(out_paths, outfile, default_flow_style=False)
+
     print(f'4/4 Done')
     return out_paths
     

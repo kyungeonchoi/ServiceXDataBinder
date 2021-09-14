@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.1.0 </p>
+<p align="right"> Release v0.1.1 </p>
 
 ServiceX DataBinder is a Python package for making multiple ServiceX requests and managing ServiceX delivered data from a configuration file. 
 
@@ -38,28 +38,33 @@ Sample:
     Columns: jet_e, jet_pt
 ```
 
+ServiceX query can be constructed with either TCut syntax or func-adl.
+- TCut expression<sup>1</sup>:  `Filter` and `Columns`
+- Func-adl expression<sup>2</sup>: `FuncADL`
+
 The following settings are available options:
 
 <!-- `General` block: -->
-| Option for `General` | Description       |
-|:--------:|:------:|
-| `ServiceXBackendName` | ServiceX backend name (only `uproot` is supported at the moment) |
-| `OutputDirectory` | Path to the directory for ServiceX delivered files |
-| `OutputFormat` | Output file format of ServiceX delivered data (only `parquet` is supported at the moment) |
-| `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests |
+| Option for `General` | Description       | DataType |
+|:--------:|:------:|:------|
+| `ServiceXBackendName` | ServiceX backend name (only `uproot` is supported at the moment) | `String` |
+| `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
+| `OutputFormat` | Output file format of ServiceX delivered data (only `parquet` is supported at the moment) | `String` |
+| `WriteOutputDict` | Write a yaml file containing Python nested dictionary of output file paths | `String` |
+| `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 
-| Option for `Sample` | Description       |
-|:--------:|:------:|
-| `Name`   | sample name defined by a user |
-| `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |
-| `Tree` | Name of the input ROOT `TTree` |
-| `Filter`<sup>1</sup> | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0`  |
-| `Columns`<sup>1</sup> | List of columns (or branches) to be delivered; multiple columns separately by comma |
-| `FuncADL`<sup>2</sup> | func-adl expression for a given sample |
+| Option for `Sample` | Description       |DataType |
+|:--------:|:------:|:------|
+| `Name`   | sample name defined by a user |`String` |
+| `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
+| `Tree` | Name of the input ROOT `TTree` |`String` |
+| `Filter`<sup>1</sup> | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0`  |`String` |
+| `Columns`<sup>1</sup> | List of columns (or branches) to be delivered; multiple columns separately by comma |`String` |
+| `FuncADL`<sup>2</sup> | func-adl expression for a given sample |`String` |
 
-<sup>1</sup> Options for TCut syntax (CANNOT combine with the option `FuncADL`)
+ <!-- Options exclusively for TCut syntax (CANNOT combine with the option `FuncADL`) -->
 
-<sup>2</sup> Option for func-adl expression (CANNOT combine with the option `Fitler` and `Columns`)
+ <!-- Option for func-adl expression (CANNOT combine with the option `Fitler` and `Columns`) -->
 
 <!-- ## Installation
 
@@ -74,6 +79,8 @@ from servicex_databinder import DataBinder
 sx_db = DataBinder('<CONFIG>.yml')
 out = sx_db.deliver()
 ```
+
+The function `deliver()` returns a Python nested dictionary: `out['<SAMPLE>']['<TREE>'] = [ List of output files ]`.
 
 ## Acknowledgements
 
