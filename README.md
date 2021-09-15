@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.1.1 </p>
+<p align="right"> Release v0.1.2 </p>
 
 ServiceX DataBinder is a Python package for making multiple ServiceX requests and managing ServiceX delivered data from a configuration file. 
 
@@ -39,8 +39,11 @@ Sample:
 ```
 
 ServiceX query can be constructed with either TCut syntax or func-adl.
-- TCut expression<sup>1</sup>:  `Filter` and `Columns`
-- Func-adl expression<sup>2</sup>: `FuncADL`
+- Options for TCut expression:  `Filter` and `Columns`
+- Option for Func-adl expression: `FuncADL`
+
+<!-- <sup>1</sup> `Filter` works only for scalar-type of TBranch -->
+
 
 The following settings are available options:
 
@@ -58,9 +61,9 @@ The following settings are available options:
 | `Name`   | sample name defined by a user |`String` |
 | `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
 | `Tree` | Name of the input ROOT `TTree` |`String` |
-| `Filter`<sup>1</sup> | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0`  |`String` |
-| `Columns`<sup>1</sup> | List of columns (or branches) to be delivered; multiple columns separately by comma |`String` |
-| `FuncADL`<sup>2</sup> | func-adl expression for a given sample |`String` |
+| `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
+| `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
+| `FuncADL` | func-adl expression for a given sample (func adl ONLY) |`String` |
 
  <!-- Options exclusively for TCut syntax (CANNOT combine with the option `FuncADL`) -->
 

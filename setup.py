@@ -31,7 +31,7 @@ setuptools.setup(name="servicex_databinder",
                  license="BSD 3-clause",
                  python_requires='>=3.6',
                  install_requires=[
-                    "servicex>=2.4",
+                    "servicex==2.4",
                     "tcut-to-qastle>=0.6",                    
                     "nest-asyncio>=1.5.1",                
                     "tqdm>=4.60.0",

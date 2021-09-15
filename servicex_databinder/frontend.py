@@ -3,6 +3,7 @@ from servicex import ServiceXDataset
 from aiohttp import ClientSession
 import nest_asyncio
 from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
 
 # import sys
 # sys.path.insert(1,"/Users/kchoi/ServiceX/ServiceX_frontend")
@@ -16,6 +17,15 @@ class ServiceXFrontend:
         """
         self._config = config
         self._servicex_requests = servicex_requests
+
+    def get_current_cache(self):
+        cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
+        query_cache_status = Path.joinpath(cache_path, "query_cache_status")
+        # for query_cache in list(query_cache_status.glob('*')):
+        #     query_cache
+        return list(query_cache_status.glob('*'))
+        # return query_cache_status
+    
 
     def get_servicex_data(self, test_run=False):
         """

@@ -19,8 +19,11 @@ class DataBinder:
         # Configure ServiceX Frontend to connect ServiceX backend
         sx = ServiceXFrontend(self._config, self._request.get_requests())
 
+        # print(f"Current cache: {sx.get_current_cache()}")
+        current_cache = sx.get_current_cache()
+
         # Get a list of parquet files for each ServiceX request
         output_parquet_list = sx.get_servicex_data()
 
         # Handles ServiceX delivered output
-        return _output_handler(self._config, self._request.get_requests(), output_parquet_list)
+        return _output_handler(self._config, self._request.get_requests(), output_parquet_list, current_cache)
