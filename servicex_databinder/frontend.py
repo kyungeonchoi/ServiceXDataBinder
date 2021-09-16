@@ -18,7 +18,7 @@ class ServiceXFrontend:
         self._config = config
         self._servicex_requests = servicex_requests
 
-    def get_current_cache(self):
+    def get_current_cache(self) -> List:
         cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
         query_cache_status = Path.joinpath(cache_path, "query_cache_status")
         # for query_cache in list(query_cache_status.glob('*')):

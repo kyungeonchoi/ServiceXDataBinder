@@ -59,16 +59,30 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
         for req, out in zip(request, output):
             # print(f"Sample: {req['Sample']}, DID: {req['gridDID']}")
             # print(f"get_cache_query: {get_cache_query(req)}")
-            if get_cache_query(req) in current_cache:
-                # print(f"Request is in cache")
-                out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                    glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+            out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
+            if Path(out_path).exists():
+                if get_cache_query(req) in current_cache:
+                    out_paths[req['Sample']][get_tree_name(req['query'])] = \
+                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+                    pass
+                    # print(f"Request is in cache")                    
+                else:
+                    # print(f"Request is NOT in cache")
+                    Path(out_path).mkdir(parents=True, exist_ok=True)
+                    for src in out: copy(src, out_path)
+                    out_paths[req['Sample']][get_tree_name(req['query'])] = \
+                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
             else:
-                # print(f"Request is NOT in cache")
-                out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
                 Path(out_path).mkdir(parents=True, exist_ok=True)
                 for src in out: copy(src, out_path)
+                out_paths[req['Sample']][get_tree_name(req['query'])] = \
+                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
             # print("\n")
+
+        
+
+            # out_paths[req['Sample']][get_tree_name(req['query'])] = \
+            #             glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
 
         # TODO: newly added DID to a Sample can be handled by above loop, but nothing done if a DID is removed from Sample. 
     
