@@ -1,5 +1,6 @@
 from pathlib import Path
-from shutil import copy
+from shutil import copy, rmtree
+import shutil
 from typing import Dict, Any, List
 from glob import glob
 import re
@@ -86,10 +87,41 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
                 out_paths[req['Sample']][get_tree_name(req['query'])] = \
                         glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
 
+        """
+        Clean up parquet files in the output path if they are not in the requests
+        1. delete undefined Samples
+        2. delete undefined Trees
+        3. delete undefined Parquet files
+        """
+        local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*'))]
+        # print(f"Local samples: {local_samples}, Samples in request: {samples}")
+        samples_not_in_request = list(set(local_samples) ^ set(samples))
+        for sa in samples_not_in_request:
+            # print(f"deleting {sa}")
+            shutil.rmtree(Path(output_path, sa))
 
-
-
-
+        for sample in samples:
+            local_trees = []
+            for tree in list(Path(output_path,sample).glob('*')):
+                local_trees.append(str(tree).split('/')[-1])
+            trees_in_request = list(out_paths[sample].keys())
+            trees_not_in_request = list(set(local_trees) ^ set(trees_in_request))
+            # print(f"{sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
+            for tr in trees_not_in_request:
+                # print(f"deleting {sa}")
+                shutil.rmtree(Path(output_path, sample, tr))
+            
+        all_files_in_local = []
+        for sample in samples:
+            for tree in list(Path(output_path,sample).glob('*')):
+                all_files_in_local.append(list(Path(tree).glob('*')))
+        all_files_in_local = [f for x in all_files_in_local for f in x]
+        all_files_in_requests = [f for x in all_files_in_requests for f in x]
+        # print(f"Nlocal: {len(all_files_in_local)}, NReq: {len(all_files_in_requests)}")
+        files_not_in_request = list(set(all_files_in_local) ^ set(all_files_in_requests))
+        # print(files_not_in_request)
+        for fi in files_not_in_request:
+            Path.unlink(fi)
 
 
         # TODO: newly added DID to a Sample can be handled by above loop, but nothing done if a DID is removed from Sample. 
