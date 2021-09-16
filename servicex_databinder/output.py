@@ -54,35 +54,43 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
                 q = open(query_cache).read()
                 if request['query'] in q and request['gridDID'].strip() in q:
                     return query_cache
+        
+        def file_exist_in_out_path(out, out_path) -> bool:
+            # print(f"out:\n {[Path(out_path, str(fi).split('/')[-1]) for fi in out]}")
+            # print(f"local:\n {list(Path(out_path).glob('*'))}")
+            a = [Path(out_path, str(fi).split('/')[-1]) for fi in out]
+            b = list(Path(out_path).glob('*'))
+            return set(a) <= set(b)
 
-        # Compare cache queries before and after making ServiceX requests. And then copy only new queries.
+        """
+        Compare cache queries before and after making ServiceX requests. 
+        Copy parquet files for new queries.
+        """
+        all_files_in_requests = []
         for req, out in zip(request, output):
-            # print(f"Sample: {req['Sample']}, DID: {req['gridDID']}")
-            # print(f"get_cache_query: {get_cache_query(req)}")
             out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
-            if Path(out_path).exists():
-                if get_cache_query(req) in current_cache:
+            Path(out_path).mkdir(parents=True, exist_ok=True)
+            if get_cache_query(req) in current_cache: # Matched query in cache
+                if file_exist_in_out_path(out, out_path): # Already copied
+                    all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
                         glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
-                    pass
-                    # print(f"Request is in cache")                    
-                else:
-                    # print(f"Request is NOT in cache")
-                    Path(out_path).mkdir(parents=True, exist_ok=True)
+                else: # Cached but not copied
                     for src in out: copy(src, out_path)
+                    all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
-            else:
-                Path(out_path).mkdir(parents=True, exist_ok=True)
+                            glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+            else: # New or modified requests
                 for src in out: copy(src, out_path)
+                all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                 out_paths[req['Sample']][get_tree_name(req['query'])] = \
                         glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
-            # print("\n")
 
-        
 
-            # out_paths[req['Sample']][get_tree_name(req['query'])] = \
-            #             glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+
+
+
+
 
         # TODO: newly added DID to a Sample can be handled by above loop, but nothing done if a DID is removed from Sample. 
     
