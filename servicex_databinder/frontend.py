@@ -45,7 +45,8 @@ class ServiceXFrontend:
         async def _get_my_data():
             sem = asyncio.Semaphore(50) # Limit maximum concurrent ServiceX requests
             tasks = []
-            uproot_transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
+            # uproot_transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
+            uproot_transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
             async with ClientSession() as session:
                 for request in self._servicex_requests:
                     sx_ds = ServiceXDataset(dataset=request['gridDID'], \
