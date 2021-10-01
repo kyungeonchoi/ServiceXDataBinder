@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import copy, rmtree
-import shutil
+# import shutil
 from typing import Dict, Any, List
 from glob import glob
 import re
@@ -93,12 +93,14 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
         2. delete undefined Trees
         3. delete undefined Parquet files
         """
-        local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*'))]
+        # local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*'))]
+        local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*')) if sa.is_dir()]
         # print(f"Local samples: {local_samples}, Samples in request: {samples}")
         samples_not_in_request = list(set(local_samples) ^ set(samples))
         for sa in samples_not_in_request:
             # print(f"deleting {sa}")
-            shutil.rmtree(Path(output_path, sa))
+            # shutil.rmtree(Path(output_path, sa))
+            rmtree(Path(output_path, sa))
 
         for sample in samples:
             local_trees = []
@@ -109,7 +111,8 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
             # print(f"{sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
             for tr in trees_not_in_request:
                 # print(f"deleting {sa}")
-                shutil.rmtree(Path(output_path, sample, tr))
+                # shutil.rmtree(Path(output_path, sample, tr))
+                rmtree(Path(output_path, sample, tr))
             
         all_files_in_local = []
         for sample in samples:
