@@ -127,7 +127,7 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
         # TODO: newly added DID to a Sample can be handled by above loop, but nothing done if a DID is removed from Sample. 
     
     if 'WriteOutputDict' in config['General'].keys():
-        with open(f"{config['General']['WriteOutputDict']}.yml", 'w') as outfile:
+        with open(f"{output_path}/{config['General']['WriteOutputDict']}.yml", 'w') as outfile:
             yaml.dump(out_paths, outfile, default_flow_style=False)
 
     print(f'4/4 Done')
