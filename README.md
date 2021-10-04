@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.1.2 </p>
+<p align="right"> Release v0.1.3 </p>
 
 ServiceX DataBinder is a Python package for making multiple ServiceX requests and managing ServiceX delivered data from a configuration file. 
 
@@ -53,7 +53,7 @@ The following settings are available options:
 | `ServiceXBackendName` | ServiceX backend name (only `uproot` is supported at the moment) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
 | `OutputFormat` | Output file format of ServiceX delivered data (only `parquet` is supported at the moment) | `String` |
-| `WriteOutputDict` | Write a yaml file containing Python nested dictionary of output file paths | `String` |
+| `WriteOutputDict` | Name of a yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 
 | Option for `Sample` | Description       |DataType |
