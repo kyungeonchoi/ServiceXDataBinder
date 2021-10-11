@@ -6,6 +6,9 @@ from glob import glob
 import re
 import yaml
 from servicex import ServiceXDataset
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def _output_handler(config:Dict[str, Any], request, output, current_cache:List) -> Dict[str,List]:
@@ -14,7 +17,7 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
     uproot + parquet: create subdirectory for each sample and copy parquet files
     uproot + root: create one root file per sample
     """
-    print("3/4 Post-processing..")
+    log.info("post-processing..")
 
     if len(request) == len(output):
         pass
@@ -31,7 +34,7 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
     else:
         Path('ServiceXData').mkdir(parents=True, exist_ok=True)
         output_path = 'ServiceXData'
-    
+    log.debug(f"output directory is {output_path}")
     
     # Prepare output path dictionary
     out_paths = {}
@@ -57,8 +60,6 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
                     return query_cache
         
         def file_exist_in_out_path(out, out_path) -> bool:
-            # print(f"out:\n {[Path(out_path, str(fi).split('/')[-1]) for fi in out]}")
-            # print(f"local:\n {list(Path(out_path).glob('*'))}")
             a = [Path(out_path, str(fi).split('/')[-1]) for fi in out]
             b = list(Path(out_path).glob('*'))
             return set(a) <= set(b)
@@ -93,13 +94,12 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
         2. delete undefined Trees
         3. delete undefined Parquet files
         """
-        # local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*'))]
         local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*')) if sa.is_dir()]
-        # print(f"Local samples: {local_samples}, Samples in request: {samples}")
+        log.debug("syncing output path with the config")
+        log.debug(f"  Samples in output directory: {local_samples}, Samples in request: {samples}")
         samples_not_in_request = list(set(local_samples) ^ set(samples))
         for sa in samples_not_in_request:
-            # print(f"deleting {sa}")
-            # shutil.rmtree(Path(output_path, sa))
+            log.debug(f"  deleting {sa}")
             rmtree(Path(output_path, sa))
 
         for sample in samples:
@@ -108,10 +108,9 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
                 local_trees.append(str(tree).split('/')[-1])
             trees_in_request = list(out_paths[sample].keys())
             trees_not_in_request = list(set(local_trees) ^ set(trees_in_request))
-            # print(f"{sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
+            log.debug(f"  {sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
             for tr in trees_not_in_request:
-                # print(f"deleting {sa}")
-                # shutil.rmtree(Path(output_path, sample, tr))
+                log.debug(f"  deleting {tr}")
                 rmtree(Path(output_path, sample, tr))
             
         all_files_in_local = []
@@ -120,45 +119,19 @@ def _output_handler(config:Dict[str, Any], request, output, current_cache:List) 
                 all_files_in_local.append(list(Path(tree).glob('*')))
         all_files_in_local = [f for x in all_files_in_local for f in x]
         all_files_in_requests = [f for x in all_files_in_requests for f in x]
-        # print(f"Nlocal: {len(all_files_in_local)}, NReq: {len(all_files_in_requests)}")
+        log.debug(f"  Nlocal: {len(all_files_in_local)}, NReq: {len(all_files_in_requests)}")
         files_not_in_request = list(set(all_files_in_local) ^ set(all_files_in_requests))
-        # print(files_not_in_request)
+        log.debug(f"  deleting {len(files_not_in_request)} files")
         for fi in files_not_in_request:
             Path.unlink(fi)
 
-
-        # TODO: newly added DID to a Sample can be handled by above loop, but nothing done if a DID is removed from Sample. 
-    
     if 'WriteOutputDict' in config['General'].keys():
         with open(f"{output_path}/{config['General']['WriteOutputDict']}.yml", 'w') as outfile:
+            log.debug(f"write a yaml file containg output paths: {outfile.name}")
             yaml.dump(out_paths, outfile, default_flow_style=False)
+    else:
+        for yl in list(Path(output_path).glob("*yml")):
+            Path.unlink(yl)
 
-    print(f'4/4 Done')
+    log.info("done.")
     return out_paths
-
-
-        # def get_old_cache_filelist(request:Dict) -> bool:
-        #     cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
-        #     query_cache_status = Path.joinpath(cache_path, "query_cache_status")
-
-        #     for query_cache in list(query_cache_status.glob('*')):
-        #         q = open(query_cache).read()
-        #         # if request['gridDID'].strip() in query: # and request['query'] in query:
-        #         # if request['query'] in q:
-        #         if request['query'] in q and request['gridDID'].strip() in q:
-        #             print("Identical")
-        #             print(request['Sample'])
-        #             print(request['gridDID'])
-        #             print(request['query'])
-        #             print(q)
-        #             # file_path = Path(str(query_cache).replace('query_cache_status','data'))
-        #             # return [str(p).split('/')[-1] for p in file_path.iterdir() if p.is_file()]
-        #             return True
-        #         else:
-        #             # print("Different")
-        #             # print(request['Sample'])
-        #             # print(request['gridDID'])
-        #             # print(request['query'])
-        #             # print(q)
-        #             pass
-        #     return False

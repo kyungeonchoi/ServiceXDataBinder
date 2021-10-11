@@ -13,7 +13,7 @@ def _load_config(file_path_string: Union[str, pathlib.Path]) -> Dict[str, Any]:
         Dict[str, Any]: configuration
     """
     file_path = pathlib.Path(file_path_string)
-    log.info(f"opening config file {file_path}")
+    log.info(f"opening config file: {file_path}")
     config = yaml.safe_load(file_path.read_text())
     _validate_config(config)
     return config

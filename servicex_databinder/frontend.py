@@ -4,10 +4,9 @@ from aiohttp import ClientSession
 import nest_asyncio
 from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+import logging
 
-# import sys
-# sys.path.insert(1,"/Users/kchoi/ServiceX/ServiceX_frontend")
-# from servicex import ServiceXDataset
+log = logging.getLogger(__name__)
 
 class ServiceXFrontend:
 
@@ -18,35 +17,29 @@ class ServiceXFrontend:
         self._config = config
         self._servicex_requests = servicex_requests
 
-    def get_current_cache(self) -> List:
+    def get_current_cache(self) -> List:        
         cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
+        log.debug(f"local cache path: {cache_path}")
         query_cache_status = Path.joinpath(cache_path, "query_cache_status")
-        # for query_cache in list(query_cache_status.glob('*')):
-        #     query_cache
         return list(query_cache_status.glob('*'))
-        # return query_cache_status
-    
 
     def get_servicex_data(self, test_run=False):
         """
         Get data from ServiceX
         """
-        print("1/4 Retrieving data from ServiceX Uproot backend..")
+        log.info(f"retrieving data via {self._config['General']['ServiceXBackendName']} ServiceX..")
 
         nest_asyncio.apply()
  
         async def bound_get_data(sem, sx_ds, query):
             async with sem:
                 return await sx_ds.get_data_parquet_async(query)
-        # async def bound_get_data(sem, sx_ds, query, sample):
-        #     async with sem:
-        #         return await sx_ds.get_data_parquet_async(selection_query=query, title=sample)
 
         async def _get_my_data():
             sem = asyncio.Semaphore(50) # Limit maximum concurrent ServiceX requests
             tasks = []
-            # uproot_transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
-            uproot_transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
+            uproot_transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
+            # uproot_transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
             async with ClientSession() as session:
                 for request in self._servicex_requests:
                     sx_ds = ServiceXDataset(dataset=request['gridDID'], \
@@ -56,12 +49,11 @@ class ServiceXFrontend:
                         ignore_cache=self._config['General']['IgnoreServiceXCache'])
                     query = request['query']
 
-                    # task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query, request['Sample']))
                     task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query))
                     tasks.append(task)
                 return await asyncio.gather(*tasks)
 
         newloop = asyncio.get_event_loop()
         data = newloop.run_until_complete(_get_my_data())
-        print("2/4 Complete ServiceX data delivery..")
+        log.info(f"complete ServiceX data delivery..")
         return data

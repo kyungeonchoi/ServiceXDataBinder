@@ -1,3 +1,8 @@
+import logging
+
 from .servicex_databinder import DataBinder
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
+
+logging.basicConfig(format="%(levelname)s - %(message)s")
+logging.getLogger(__name__).setLevel(logging.INFO)
