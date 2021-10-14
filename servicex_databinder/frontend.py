@@ -29,6 +29,11 @@ class ServiceXFrontend:
         """
         log.info(f"retrieving data via {self._config['General']['ServiceXBackendName']} ServiceX..")
 
+        if 'IgnoreServiceXCache' in self._config['General'].keys():
+            ignoreCache = self._config['General']['IgnoreServiceXCache']
+        else:
+            ignoreCache = False
+
         nest_asyncio.apply()
  
         async def bound_get_data(sem, sx_ds, query):
@@ -39,14 +44,13 @@ class ServiceXFrontend:
             sem = asyncio.Semaphore(50) # Limit maximum concurrent ServiceX requests
             tasks = []
             uproot_transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
-            # uproot_transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
             async with ClientSession() as session:
                 for request in self._servicex_requests:
                     sx_ds = ServiceXDataset(dataset=request['gridDID'], \
-                        backend_name=self._config['General']['ServiceXBackendName'], \
-                        image=uproot_transformer_image, \
-                        session_generator=session, \
-                        ignore_cache=self._config['General']['IgnoreServiceXCache'])
+                                            backend_name=self._config['General']['ServiceXBackendName'], \
+                                            image=uproot_transformer_image, \
+                                            session_generator=session, \
+                                            ignore_cache=ignoreCache)
                     query = request['query']
 
                     task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query))
