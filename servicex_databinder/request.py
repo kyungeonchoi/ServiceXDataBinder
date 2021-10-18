@@ -3,6 +3,7 @@ import tcut_to_qastle as tq
 import qastle
 import ast
 import logging
+from func_adl_servicex import ServiceXSourceXAOD
 
 log = logging.getLogger(__name__)
 
@@ -10,9 +11,10 @@ class ServiceXRequest():
     """Prepare ServiceX requests"""
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
-
+        self._backend = self._config.get('General')['ServiceXBackendName'].lower()
 
     def get_requests(self) -> List:
+        log.debug(f"ServiceX backend: {self._config.get('General')['ServiceXBackendName']}")
         list_requests = []
         for sample in self._config.get('Sample'):
             list_requests.append(self._build_request(sample))
@@ -25,7 +27,10 @@ class ServiceXRequest():
         requests_sample = []
         query = self._build_query(sample)
         dids = sample['GridDID'].split(',')
-        log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
+        if 'uproot' in self._backend:
+            log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(dids)} DID(s)")
+        elif 'xaod' in self._backend:
+            log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
         for did in dids:
             requests_sample.append(
                 {
@@ -38,22 +43,31 @@ class ServiceXRequest():
         
 
     def _build_query(self, sample: Dict) -> str:
-        """ Option Columns for TCut syntax and Option FuncADL for func-adl syntax"""
-        if 'Columns' in sample:
-            if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
+        """ Option Columns for TCut syntax and Option FuncADL for func-adl syntax"""        
+        if 'uproot' in self._backend:
+            if 'Columns' in sample:
+                if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
+                try:
+                    query = tq.translate(
+                        sample['Tree'],
+                        sample['Columns'],
+                        sample['Filter']
+                    )
+                    return query
+                except:
+                    log.exception(f"Exception occured for the query of Sample {sample['Name']}")
+            elif 'FuncADL' in sample:
+                query = f"EventDataset('ServiceXDatasetSource', '{sample['Tree']}')." + sample['FuncADL']
+                try:
+                    qastle_query = qastle.python_ast_to_text_ast(qastle.insert_linq_nodes(ast.parse(query)))
+                    return qastle_query
+                except:
+                    log.exception(f"Exception occured for the query of Sample {sample['Name']}")
+        elif 'xaod' in self._backend:
+            query = f"ServiceXSourceXAOD('')." + sample['FuncADL']
             try:
-                query = tq.translate(
-                    sample['Tree'],
-                    sample['Columns'],
-                    sample['Filter']
-                )
-                return query
-            except:
-                log.exception(f"Exception occured for the query of Sample {sample['Name']}")
-        elif 'FuncADL' in sample:
-            query = f"EventDataset('ServiceXDatasetSource', '{sample['Tree']}')." + sample['FuncADL']
-            try:
-                qastle_query = qastle.python_ast_to_text_ast(qastle.insert_linq_nodes(ast.parse(query)))
+                o = eval(query)
+                qastle_query = qastle.python_ast_to_text_ast(o._q_ast)
                 return qastle_query
             except:
                 log.exception(f"Exception occured for the query of Sample {sample['Name']}")

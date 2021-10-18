@@ -14,9 +14,13 @@ def _load_config(file_path_string: Union[str, pathlib.Path]) -> Dict[str, Any]:
     """
     file_path = pathlib.Path(file_path_string)
     log.info(f"opening config file: {file_path}")
-    config = yaml.safe_load(file_path.read_text())
-    _validate_config(config)
-    return config
+    try:
+        config = yaml.safe_load(file_path.read_text())
+        _validate_config(config)
+        return config
+    except:
+        log.exception(f"Exception occured while reading config file: {file_path}")
+        raise
 
 def _validate_config(config: Dict[str, Any]) -> bool:
     """Returns True if the config file is validated, otherwise raises exceptions.

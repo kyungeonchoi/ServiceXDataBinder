@@ -50,17 +50,17 @@ The following settings are available options:
 <!-- `General` block: -->
 | Option for `General` | Description       | DataType |
 |:--------:|:------:|:------|
-| `ServiceXBackendName` | ServiceX backend name (only `uproot` is supported at the moment) | `String` |
+| `ServiceXBackendName` | ServiceX backend name (`uproot`, `xAOD`) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
-| `OutputFormat` | Output file format of ServiceX delivered data (only `parquet` is supported at the moment) | `String` |
-| `WriteOutputDict` | Name of a yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
+| `OutputFormat` | Output file format of ServiceX delivered data (`parquet` for `uproot` and `root` for `xaod`) | `String` |
+| `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 
 | Option for `Sample` | Description       |DataType |
 |:--------:|:------:|:------|
 | `Name`   | sample name defined by a user |`String` |
 | `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
-| `Tree` | Name of the input ROOT `TTree` |`String` |
+| `Tree` | Name of the input ROOT `TTree` (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
 | `FuncADL` | func-adl expression for a given sample (func adl ONLY) |`String` |
@@ -83,7 +83,9 @@ sx_db = DataBinder('<CONFIG>.yml')
 out = sx_db.deliver()
 ```
 
-The function `deliver()` returns a Python nested dictionary: `out['<SAMPLE>']['<TREE>'] = [ List of output files ]`.
+The function `deliver()` returns a Python nested dictionary: 
+- for `uproot` backend: `out['<SAMPLE>']['<TREE>'] = [ List of output files ]`
+- for `xAOD` backend: `out['<SAMPLE>'] = [ List of output files ]`
 
 ## Acknowledgements
 

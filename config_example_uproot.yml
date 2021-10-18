@@ -1,8 +1,8 @@
 General:
   ServiceXBackendName: uproot
-  OutputDirectory: /Users/kchoi/ServiceX/ServiceXDataBinder/ServiceXData6
+  OutputDirectory: ServiceXData_uproot
   OutputFormat: parquet
-  WriteOutputDict: out
+  WriteOutputDict: out_uproot
   IgnoreServiceXCache: False
   
 Sample:

@@ -16,16 +16,17 @@ class DataBinder:
         self._config = _load_config(config)
         self._requests = ServiceXRequest(self._config).get_requests()
         self._sx = ServiceXFrontend(self._config, self._requests)
-        self._current_cache = self._sx.get_current_cache()
+        self._cache_before_requests = self._sx.get_current_cache()
         
 
     def deliver(self, timer=False) -> Dict:
         
-        # Get a list of parquet files for each ServiceX request
+        """Get a list of parquet files for each ServiceX request"""
         try:
             output_parquet_list = self._sx.get_servicex_data()
         except:
             log.exception("Exception occured while gettting data via ServiceX")
+            raise
 
-        # Handles ServiceX delivered output
-        return _output_handler(self._config, self._requests, output_parquet_list, self._current_cache)
+        """Handles ServiceX delivered output"""
+        return _output_handler(self._config, self._requests, output_parquet_list, self._cache_before_requests)

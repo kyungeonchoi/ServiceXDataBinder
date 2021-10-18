@@ -1,0 +1,14 @@
+General:
+  ServiceXBackendName: xaod
+  OutputDirectory: ServiceXData_xaod
+  OutputFormat: root
+  WriteOutputDict: out_xaod
+  IgnoreServiceXCache: False
+  
+Sample:
+  - Name: Zee
+    GridDID: mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00
+    FuncADL: "Select('lambda e: e.Jets(\"AntiKt4EMTopoJets\")'). \
+              Select('lambda jets: jets.Where(lambda j: (j.pt()/1000)>300)'). \
+              Select('lambda good_jets: good_jets.Select(lambda j: j.pt()/1000.0)'). \ 
+              AsROOTTTree('junk.root', 'my_tree', ['JetPt'])"
