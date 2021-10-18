@@ -80,17 +80,17 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 if file_exist_in_out_path(out, out_path): # Already copied
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
                 else: # Cached but not copied
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                            glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+                            glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
             else: # New or modified requests
                 for src in out: copy(src, out_path)
                 all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                 out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                        glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/{get_tree_name(req['query'])}/*")
+                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
 
         """
         Clean up parquet files in the output path if they are not in the requests
@@ -134,7 +134,6 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     xAOD + ROOT
     """
     if config['General']['OutputFormat'].lower() == "root" and "xaod" in config['General']['ServiceXBackendName'].lower():
-
         """
         Compare cache queries before and after making ServiceX requests. 
         Copy parquet files for new queries.
@@ -146,15 +145,15 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             if get_cache_query(req) in cache_before_requests: # Matched query in cache
                 if file_exist_in_out_path(out, out_path): # Already copied
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                    out_paths[req['Sample']] = glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/*")
+                    out_paths[req['Sample']] = glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample']).resolve())}/*")
                 else: # Cached but not copied
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                    out_paths[req['Sample']] = glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/*")
+                    out_paths[req['Sample']] = glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample']).resolve())}/*")
             else: # New or modified requests
                 for src in out: copy(src, out_path)
                 all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                out_paths[req['Sample']] = glob(f"{config['General']['OutputDirectory']}/{req['Sample']}/*")
+                out_paths[req['Sample']] = glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample']).resolve())}/*")
 
         """
         Clean up parquet files in the output path if they are not in the requests
