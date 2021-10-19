@@ -27,12 +27,12 @@ General:
   
 Sample:
   - Name: ttH
-    GridDID: user.kchoi:user.kchoi.sampleA, 
+    RucioDID: user.kchoi:user.kchoi.sampleA, 
              user.kchoi:user.kchoi.sampleB
     Tree: nominal
     FuncADL: "Select(lambda event: {'jet_e': event.jet_e, 'jet_pt': event.jet_pt})"
   - Name: ttW
-    GridDID: user.kchoi:user.kchoi.sampleC
+    RucioDID: user.kchoi:user.kchoi.sampleC
     Tree: nominal
     Filter: n_jet > 5 
     Columns: jet_e, jet_pt
@@ -59,7 +59,7 @@ The following settings are available options:
 | Option for `Sample` | Description       |DataType |
 |:--------:|:------:|:------|
 | `Name`   | sample name defined by a user |`String` |
-| `GridDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
+| `RucioDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
 | `Tree` | Name of the input ROOT `TTree` (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |

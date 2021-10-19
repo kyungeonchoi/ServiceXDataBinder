@@ -54,7 +54,7 @@ class ServiceXFrontend:
             
             async with ClientSession() as session:
                 for request in self._servicex_requests:
-                    sx_ds = ServiceXDataset(dataset=request['gridDID'], \
+                    sx_ds = ServiceXDataset(dataset=request['rucioDID'], \
                                             backend_name=backend, \
                                             image=transformer_image, \
                                             session_generator=session, \

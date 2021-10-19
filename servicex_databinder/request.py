@@ -26,7 +26,7 @@ class ServiceXRequest():
     def _build_request(self, sample: Dict) -> Dict:
         requests_sample = []
         query = self._build_query(sample)
-        dids = sample['GridDID'].split(',')
+        dids = sample['RucioDID'].split(',')
         if 'uproot' in self._backend:
             log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(dids)} DID(s)")
         elif 'xaod' in self._backend:
@@ -35,7 +35,7 @@ class ServiceXRequest():
             requests_sample.append(
                 {
                 'Sample': sample['Name'],
-                'gridDID': did.strip(),
+                'rucioDID': did.strip(),
                 'query': query
                 }
             )

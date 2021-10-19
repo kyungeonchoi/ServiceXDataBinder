@@ -49,7 +49,7 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
 
         for query_cache in list(query_cache_status.glob('*')):
             q = open(query_cache).read()
-            if request['query'] in q and request['gridDID'].strip() in q and yaml.safe_load(q)['status'] == 'Complete':
+            if request['query'] in q and request['rucioDID'].strip() in q and yaml.safe_load(q)['status'] == 'Complete':
                 return query_cache
         return False
 
