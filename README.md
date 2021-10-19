@@ -50,7 +50,7 @@ The following settings are available options:
 <!-- `General` block: -->
 | Option for `General` | Description       | DataType |
 |:--------:|:------:|:------|
-| `ServiceXBackendName` | ServiceX backend name (`uproot` or `xAOD`) | `String` |
+| `ServiceXBackendName` | ServiceX backend name in your `servicex.yaml` file (e.g. `uproot` or `xAOD`) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
 | `OutputFormat` | Output file format of ServiceX delivered data (`parquet` for `uproot` or `root` for `xaod`) | `String` |
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
