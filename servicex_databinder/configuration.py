@@ -29,10 +29,51 @@ def _validate_config(config: Dict[str, Any]) -> bool:
     Args:
         config (Dict[str, Any]): configuration
     Raises:
-        NotImplementedError: when more than one data sample is found
-        ValueError: when region / sample / normfactor / systematic names are not unique
+        NotImplementedError
+        ValueError
+        KeyError
     Returns:
         bool: whether the validation was successful
     """
+    
+    if 'General' not in config.keys():
+        raise KeyError(f"You should have 'General' in the config")
+    elif 'Sample' not in config.keys():
+        raise KeyError(f"You should have at least one 'Sample' in the config")
+    
+    if 'ServiceXBackendName' not in config['General'].keys():
+        raise KeyError(f"ServiceXBackendName is required")
+    elif 'uproot' not in config['General']['ServiceXBackendName'].lower() and \
+         'xaod' not in config['General']['ServiceXBackendName'].lower():
+        raise ValueError(f"ServiceXBackendName should contain either uproot or xaod")
 
+    if 'OutputDirectory' not in config['General'].keys():
+        raise KeyError(f"OutputDirectory is required")
+
+    if 'OutputFormat' not in config['General'].keys():
+        raise KeyError(f"OutputFormat is required")
+    elif config['General']['OutputFormat'].lower() != 'parquet' and \
+         config['General']['OutputFormat'].lower() != 'root':
+        raise ValueError(f"OutputFormat can be either parquet or root")
+    elif config['General']['OutputFormat'].lower() == 'parquet':
+        if 'uproot' not in config['General']['ServiceXBackendName'].lower():
+            raise NotImplementedError(f"uproot backend supports only parquet format at the moment")
+    elif config['General']['OutputFormat'].lower() == 'root':
+        if 'xaod' not in config['General']['ServiceXBackendName'].lower():
+            raise NotImplementedError(f"xaod backend supports only root format at the moment")
+
+    for sample in config['Sample']:
+        if 'RucioDID' not in sample:
+            raise KeyError(f"Sample {sample['Name']} should have RucioDID")
+        for did in sample['RucioDID'].split(","):
+            if len(did.split(":")) != 2:
+                raise ValueError(f"Sample {sample['Name']} - RucioDID {did} is missing the scope")
+        if 'Tree' in sample and 'uproot' not in config['General']['ServiceXBackendName'].lower():
+            raise KeyError(f"Tree in Sample {sample['Name']} is only for uproot backend type")
+        if 'Columns' in sample and 'FuncADL' in sample:
+            raise KeyError(f"Sample {sample['Name']} - Use one type of query per sample: Columns for TCut and FuncADL for func-adl")
+        if 'FuncADL' in sample and 'Filter' in sample:
+            raise KeyError(f"Sample {sample['Name']} - You cannot use Filter with func-adl query")
+
+    log.debug("config looks okay")
     return True
