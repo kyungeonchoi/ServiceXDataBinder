@@ -19,8 +19,7 @@ def _load_config(file_path_string: Union[str, pathlib.Path]) -> Dict[str, Any]:
         _validate_config(config)
         return config
     except:
-        log.exception(f"Exception occured while reading config file: {file_path}")
-        raise
+        raise FileNotFoundError(f"Exception occured while reading config file: {file_path}")
 
 def _validate_config(config: Dict[str, Any]) -> bool:
     """Returns True if the config file is validated, otherwise raises exceptions.
@@ -36,10 +35,8 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         bool: whether the validation was successful
     """
     
-    if 'General' not in config.keys():
-        raise KeyError(f"You should have 'General' in the config")
-    elif 'Sample' not in config.keys():
-        raise KeyError(f"You should have at least one 'Sample' in the config")
+    if 'General' not in config.keys() and 'Sample' not in config.keys():
+        raise KeyError(f"You should have 'General' and 'Sample' in the config")
     
     if 'ServiceXBackendName' not in config['General'].keys():
         raise KeyError(f"ServiceXBackendName is required")
@@ -57,13 +54,13 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         raise ValueError(f"OutputFormat can be either parquet or root")
     elif config['General']['OutputFormat'].lower() == 'parquet':
         if 'uproot' not in config['General']['ServiceXBackendName'].lower():
-            raise NotImplementedError(f"uproot backend supports only parquet format at the moment")
+            raise NotImplementedError(f"Only uproot backend supports parquet format at the moment")
     elif config['General']['OutputFormat'].lower() == 'root':
         if 'xaod' not in config['General']['ServiceXBackendName'].lower():
-            raise NotImplementedError(f"xaod backend supports only root format at the moment")
+            raise NotImplementedError(f"Only xaod backend supports root format at the moment")
 
-    for sample in config['Sample']:
-        if 'RucioDID' not in sample:
+    for sample in config['Sample']:        
+        if 'RucioDID' not in sample.keys():
             raise KeyError(f"Sample {sample['Name']} should have RucioDID")
         for did in sample['RucioDID'].split(","):
             if len(did.split(":")) != 2:
