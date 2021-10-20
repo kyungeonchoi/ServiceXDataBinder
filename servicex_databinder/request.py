@@ -26,18 +26,32 @@ class ServiceXRequest():
     def _build_request(self, sample: Dict) -> Dict:
         requests_sample = []
         query = self._build_query(sample)
-        dids = sample['RucioDID'].split(',')
-        if 'uproot' in self._backend:
-            log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(dids)} DID(s)")
-        elif 'xaod' in self._backend:
-            log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
-        for did in dids:
+        if 'RucioDID' in sample.keys():
+            dids = sample['RucioDID'].split(',')
+            if 'uproot' in self._backend:
+                log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(dids)} DID(s)")
+            elif 'xaod' in self._backend:
+                log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
+            for did in dids:
+                requests_sample.append(
+                    {
+                    'Sample': sample['Name'],
+                    'dataset': did.strip(),
+                    'query': query
+                    }
+                )
+        elif 'XRootDFiles' in sample.keys():
+            xrootd_filelist = [file.strip() for file in sample['XRootDFiles'].split(",")]
+            if 'uproot' in self._backend:
+                log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(xrootd_filelist)} file(s)")
+            elif 'xaod' in self._backend:
+                log.debug(f"  Sample {sample['Name']} has {len(xrootd_filelist)} file(s)")
             requests_sample.append(
                 {
                 'Sample': sample['Name'],
-                'rucioDID': did.strip(),
+                'dataset': xrootd_filelist,
                 'query': query
-                }
+                } 
             )
         return requests_sample
         

@@ -60,11 +60,12 @@ def _validate_config(config: Dict[str, Any]) -> bool:
             raise NotImplementedError(f"Only xaod backend supports root format at the moment")
 
     for sample in config['Sample']:        
-        if 'RucioDID' not in sample.keys():
+        if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys():
             raise KeyError(f"Sample {sample['Name']} should have RucioDID")
-        for did in sample['RucioDID'].split(","):
-            if len(did.split(":")) != 2:
-                raise ValueError(f"Sample {sample['Name']} - RucioDID {did} is missing the scope")
+        if 'RucioDID' in sample.keys():
+            for did in sample['RucioDID'].split(","):
+                if len(did.split(":")) != 2:
+                    raise ValueError(f"Sample {sample['Name']} - RucioDID {did} is missing the scope")
         if 'Tree' in sample and 'uproot' not in config['General']['ServiceXBackendName'].lower():
             raise KeyError(f"Tree in Sample {sample['Name']} is only for uproot backend type")
         if 'Columns' in sample and 'FuncADL' in sample:

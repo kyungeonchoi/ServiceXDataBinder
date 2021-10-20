@@ -49,8 +49,19 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
 
         for query_cache in list(query_cache_status.glob('*')):
             q = open(query_cache).read()
-            if request['query'] in q and request['rucioDID'].strip() in q and yaml.safe_load(q)['status'] == 'Complete':
-                return query_cache
+            if type(request['dataset']) == str:
+                if request['query'] in q and request['dataset'].strip() in q and yaml.safe_load(q)['status'] == 'Complete':
+                    return query_cache
+            elif type(request['dataset']) == list:
+                if yaml.safe_load(q)['status'] == 'Complete':
+                    file_list = Path(str(query_cache).replace('query_cache_status','file_list_cache'))
+                    f = open(file_list).read()
+                    all_files_exist = True
+                    for file in request['dataset']:
+                        if file.replace('/',':') not in f:
+                            all_files_exist = False
+                    if request['query'] in q and all_files_exist == True:
+                        return query_cache
         return False
 
     def file_exist_in_out_path(out, out_path) -> bool:

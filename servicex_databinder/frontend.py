@@ -37,11 +37,9 @@ class ServiceXFrontend:
 
         if 'uproot' in self._backend:
             transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
-            backend = "uproot"
         elif 'xaod' in self._backend:
             transformer_image = "sslhep/servicex_func_adl_xaod_transformer:develop"
-            backend = "xaod"
-
+        
         nest_asyncio.apply()
  
         async def bound_get_data(sem, sx_ds, query):
@@ -54,8 +52,8 @@ class ServiceXFrontend:
             
             async with ClientSession() as session:
                 for request in self._servicex_requests:
-                    sx_ds = ServiceXDataset(dataset=request['rucioDID'], \
-                                            backend_name=backend, \
+                    sx_ds = ServiceXDataset(dataset=request['dataset'], \
+                                            backend_name=self._config['General']['ServiceXBackendName'], \
                                             image=transformer_image, \
                                             session_generator=session, \
                                             ignore_cache=ignoreCache)

@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.1.5 </p>
+<p align="right"> Release v0.1.6 </p>
 
 ServiceX DataBinder is a Python package for making multiple ServiceX requests and managing ServiceX delivered data from a configuration file. 
 
@@ -38,19 +38,23 @@ Sample:
     Columns: jet_e, jet_pt
 ```
 
+Input dataset can be defined either by `RucioDID` or `XRootDFiles`. You need to make sure whether the ServiceX backend you specified in `ServiceXBackendName` supports Rucio and/or XRootD. 
+
 ServiceX query can be constructed with either TCut syntax or func-adl.
-- Options for TCut expression:  `Filter` and `Columns`
+- Options for TCut syntax: `Filter`<sup>1</sup> and `Columns`
 - Option for Func-adl expression: `FuncADL`
 
-<!-- <sup>1</sup> `Filter` works only for scalar-type of TBranch -->
+&nbsp; &nbsp; &nbsp; <sup>1</sup> `Filter` works only for scalar-type of TBranch.
+
+Please find other example configurations for ATLAS opendata, xAOD, and Uproot ServiceX endpoints.
 
 
-The following settings are available options:
+The followings are available options:
 
 <!-- `General` block: -->
 | Option for `General` | Description       | DataType |
 |:--------:|:------:|:------|
-| `ServiceXBackendName` | ServiceX backend name in your `servicex.yaml` file (e.g. `uproot` or `xAOD`) | `String` |
+| `ServiceXBackendName` | ServiceX backend name in your `servicex.yaml` file <br> (name should contain either `uproot` or `xAOD` to distinguish the type of transformer) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
 | `OutputFormat` | Output file format of ServiceX delivered data (`parquet` for `uproot` or `root` for `xaod`) | `String` |
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
@@ -59,7 +63,8 @@ The following settings are available options:
 | Option for `Sample` | Description       |DataType |
 |:--------:|:------:|:------|
 | `Name`   | sample name defined by a user |`String` |
-| `RucioDID` | Rucio Dataset Id (DID) for a given sample; Can be multiple DIDs separated by comma |`String` |
+| `RucioDID` | Rucio Dataset Id (DID) for a given sample; <br> Can be multiple DIDs separated by comma |`String` |
+| `XRootDFiles` | XRootD files (e.g. `root://`) for a given sample; <br> Can be multiple files separated by comma |`String` |
 | `Tree` | Name of the input ROOT `TTree` (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
@@ -86,6 +91,12 @@ out = sx_db.deliver()
 The function `deliver()` returns a Python nested dictionary: 
 - for `uproot` backend: `out['<SAMPLE>']['<TREE>'] = [ List of output files ]`
 - for `xAOD` backend: `out['<SAMPLE>'] = [ List of output files ]`
+
+
+<!-- ## Currently available 
+- Dataset as Rucio DID + Input file format is ROOT TTree + ServiceX delivers output in parquet format
+- Dataset as Rucio DID + Input file format is ATLAS xAOD + ServiceX delivers output in ROOT TTree format
+- Dataset as XRootD + Input file format is ROOT TTree + ServiceX delivers output in parquet format -->
 
 ## Acknowledgements
 
