@@ -36,7 +36,8 @@ setuptools.setup(name="servicex_databinder",
                     "nest-asyncio>=1.5.1",                
                     "tqdm>=4.60.0",
                     "pyarrow>=3.0.0",
-                    "backoff>=1.11.1"
+                    "backoff>=1.11.1",
+                    "func_adl_servicex>=1.1"
                     ],
                  classifiers=[
                     "Development Status :: 3 - Alpha",
