@@ -19,7 +19,7 @@ class ServiceXFrontend:
         self._backend = self._config.get('General')['ServiceXBackendName'].lower()
 
     def get_current_cache(self) -> List:        
-        cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
+        cache_path = ServiceXDataset("",backend_name=self._config['General']['ServiceXBackendName'])._cache._path
         log.debug(f"local cache path: {cache_path}")
         query_cache_status = Path.joinpath(cache_path, "query_cache_status")
         return list(query_cache_status.glob('*'))
