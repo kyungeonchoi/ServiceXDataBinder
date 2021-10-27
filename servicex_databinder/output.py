@@ -1,14 +1,45 @@
 from pathlib import Path
-from shutil import copy, rmtree
+from shutil import ExecError, copy, rmtree
 from typing import Dict, Any, List
 from glob import glob
 import re
 import yaml
-from servicex import ServiceXDataset
 import logging
+from multiprocessing import Pool, cpu_count
+from servicex import ServiceXDataset
+import awkward as ak
+import uproot
+import pyarrow.parquet as pq
 
 log = logging.getLogger(__name__)
 
+def convert_parquet_to_root(filelist):
+    for infile in filelist:
+        try:
+            ak_arr = ak.from_parquet(infile)
+            tree_dict = {}
+            for field in ak_arr.fields:
+                tree_dict[field] = ak_arr[field]
+            outfile = uproot.recreate(infile.rstrip('parquet').rstrip('.'))
+            outfile['nominal'] = tree_dict
+            outfile.close()
+        except:
+            if pq.read_table(infile).num_rows == 0:
+                log.debug(f"empty parquet file: {infile}")
+                pass
+            else:
+                raise ExecError(f"Something wrong with the file: {infile}")
+        
+        Path(infile).unlink()
+
+def _parquet_to_root(config:Dict[str, Any], out_paths):
+    
+    log.debug("Converting parquet to ROOT")
+
+    list_sample_tree = [out_paths[sample][tree] for sample in out_paths.keys() for tree in out_paths[sample].keys()]
+    nproc = min(len(list_sample_tree), int(cpu_count()/2))
+    with Pool(processes=nproc) as pool:
+        pool.map(convert_parquet_to_root, list_sample_tree)
 
 def _output_handler(config:Dict[str, Any], request, output, cache_before_requests:List) -> Dict[str,List]:
     """
@@ -44,7 +75,7 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     
     """Utils"""
     def get_cache_query(request:Dict) -> bool:
-        cache_path = ServiceXDataset("",backend_name="uproot")._cache._path
+        cache_path = ServiceXDataset("",backend_name=config['General']['ServiceXBackendName'])._cache._path
         query_cache_status = Path.joinpath(cache_path, "query_cache_status")
 
         for query_cache in list(query_cache_status.glob('*')):
@@ -71,9 +102,10 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     
 
     """ 
-    Uproot + parquet 
+    Uproot + parquet/ROOT
     """
-    if config['General']['OutputFormat'].lower() == "parquet" and "uproot" in config['General']['ServiceXBackendName'].lower():
+    # if config['General']['OutputFormat'].lower() == "parquet" and "uproot" in config['General']['ServiceXBackendName'].lower():
+    if "uproot" in config['General']['ServiceXBackendName'].lower():
 
         def get_tree_name(query:str) -> str:
             o = re.search(r"ServiceXDatasetSource' '\w+'", query)
@@ -91,17 +123,17 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 if file_exist_in_out_path(out, out_path): # Already copied
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
+                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
                 else: # Cached but not copied
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                     out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                            glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
+                            glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
             else: # New or modified requests
                 for src in out: copy(src, out_path)
                 all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
                 out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*")
+                        glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
 
         """
         Clean up parquet files in the output path if they are not in the requests
@@ -140,6 +172,9 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             log.debug(f"    deleting {len(files_not_in_request)} files")
             for fi in files_not_in_request:
                 Path.unlink(fi)
+        
+        if config['General']['OutputFormat'].lower() == "root":
+            _parquet_to_root(config, out_paths)
 
     """ 
     xAOD + ROOT
