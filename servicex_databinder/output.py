@@ -14,29 +14,36 @@ import pyarrow.parquet as pq
 log = logging.getLogger(__name__)
 
 def convert_parquet_to_root(filelist):
-    for infile in filelist:
-        try:
-            ak_arr = ak.from_parquet(infile)
-            tree_dict = {}
-            for field in ak_arr.fields:
-                tree_dict[field] = ak_arr[field]
-            outfile = uproot.recreate(infile.rstrip('parquet').rstrip('.'))
-            outfile['nominal'] = tree_dict
+    def get_n(flist, n):
+        return flist[n]
+
+    for file in range(len(filelist[0])):
+        same_file_list = []
+        for tree in sorted(filelist):
+            same_file_list.append(get_n(tree, file))
+
+        if pq.read_table(same_file_list[0]).num_rows == 0:
+            log.debug(f"empty parquet file: {same_file_list[0]}")
+            pass
+        else:
+            outfile = uproot.recreate(same_file_list[0].rstrip('parquet').rstrip('.').replace(same_file_list[0].split('/')[-2] + '/', ''))
+            for infile in same_file_list:
+                tree_dict = {}
+                ak_arr = ak.from_parquet(infile)
+                for field in ak_arr.fields:
+                    tree_dict[field] = ak_arr[field]
+                outfile[infile.split('/')[-2]] = tree_dict
             outfile.close()
-        except:
-            if pq.read_table(infile).num_rows == 0:
-                log.debug(f"empty parquet file: {infile}")
-                pass
-            else:
-                raise ExecError(f"Something wrong with the file: {infile}")
-        
-        Path(infile).unlink()
 
 def _parquet_to_root(config:Dict[str, Any], out_paths):
     
     log.debug("Converting parquet to ROOT")
 
-    list_sample_tree = [out_paths[sample][tree] for sample in out_paths.keys() for tree in out_paths[sample].keys()]
+    list_sample_tree = []
+    sample_list = list(out_paths.keys())
+    for sample in sample_list:
+        tree_list = [out_paths[sample][tree] for tree in out_paths[sample].keys()]
+        list_sample_tree.append(tree_list)
     nproc = min(len(list_sample_tree), int(cpu_count()/2))
     with Pool(processes=nproc) as pool:
         pool.map(convert_parquet_to_root, list_sample_tree)
@@ -138,8 +145,9 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         """
         Clean up parquet files in the output path if they are not in the requests
         1. delete undefined Samples
-        2. delete undefined Trees
-        3. delete undefined Parquet files
+        2. delete root files if exist
+        3. delete undefined Trees
+        4. delete undefined Parquet files
         """
         local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*')) if sa.is_dir()]
         log.debug("synchronizing output path with the config")
@@ -149,6 +157,10 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             log.debug(f"    deleting Sample {sa}")
             rmtree(Path(output_path, sa))
 
+        for sample in samples:
+            for root_file in list(Path(output_path,sample).glob('*root')):
+                Path.unlink(root_file)
+    
         for sample in samples:
             local_trees = []
             for tree in list(Path(output_path,sample).glob('*')):
@@ -175,6 +187,10 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         
         if config['General']['OutputFormat'].lower() == "root":
             _parquet_to_root(config, out_paths)
+            for sample in samples:
+                for sa in list(Path(output_path,sample).glob('*')):
+                    if sa.is_dir():
+                        rmtree(sa)
 
     """ 
     xAOD + ROOT
