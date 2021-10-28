@@ -6,6 +6,7 @@ import re
 import yaml
 import logging
 from multiprocessing import Pool, cpu_count
+from functools import partial
 from servicex import ServiceXDataset
 import awkward as ak
 import uproot
@@ -13,7 +14,7 @@ import pyarrow.parquet as pq
 
 log = logging.getLogger(__name__)
 
-def convert_parquet_to_root(filelist):
+def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
     def get_n(flist, n):
         return flist[n]
 
@@ -30,9 +31,25 @@ def convert_parquet_to_root(filelist):
             for infile in same_file_list:
                 tree_dict = {}
                 ak_arr = ak.from_parquet(infile)
-                for field in ak_arr.fields:
-                    tree_dict[field] = ak_arr[field]
-                outfile[infile.split('/')[-2]] = tree_dict
+
+                if zip_common_vector_columns:
+                    all_fields = ak_arr.fields
+                    vec_fields = [fi for fi in ak_arr.fields if ak_arr[fi].ndim == 2]
+                    vec_prefix = [item.split('_')[0] for item in vec_fields]
+                    can_vec = [item for item in set(vec_prefix) if vec_prefix.count(item) > 1]
+                    for pfix in can_vec:
+                        dict_pfix = {}
+                        for item in vec_fields:
+                            if item.startswith(pfix):
+                                dict_pfix[item.split('_')[1]] = ak_arr[item]
+                        zipped_dict = {}
+                        zipped_dict[pfix] = ak.zip(dict_pfix)
+                        outfile[infile.split('/')[-2]] = zipped_dict
+                else:
+                    for field in ak_arr.fields:
+                        tree_dict[field] = ak_arr[field]
+                    outfile[infile.split('/')[-2]] = tree_dict
+
             outfile.close()
 
 def _parquet_to_root(config:Dict[str, Any], out_paths):
@@ -44,9 +61,16 @@ def _parquet_to_root(config:Dict[str, Any], out_paths):
     for sample in sample_list:
         tree_list = [out_paths[sample][tree] for tree in out_paths[sample].keys()]
         list_sample_tree.append(tree_list)
+
+    if 'ZipROOTColumns' in config['General']:
+        zip_common_vector_columns = config['General']['ZipROOTColumns']
+    else:
+        zip_common_vector_columns = False
+
+    convert_parquet_to_root_zip = partial(convert_parquet_to_root, zip_common_vector_columns=zip_common_vector_columns)
     nproc = min(len(list_sample_tree), int(cpu_count()/2))
     with Pool(processes=nproc) as pool:
-        pool.map(convert_parquet_to_root, list_sample_tree)
+        pool.map(convert_parquet_to_root_zip, list_sample_tree)
 
 def _output_handler(config:Dict[str, Any], request, output, cache_before_requests:List) -> Dict[str,List]:
     """
@@ -111,7 +135,6 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     """ 
     Uproot + parquet/ROOT
     """
-    # if config['General']['OutputFormat'].lower() == "parquet" and "uproot" in config['General']['ServiceXBackendName'].lower():
     if "uproot" in config['General']['ServiceXBackendName'].lower():
 
         def get_tree_name(query:str) -> str:
@@ -187,10 +210,15 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         
         if config['General']['OutputFormat'].lower() == "root":
             _parquet_to_root(config, out_paths)
+            
+            out_paths.clear() # clear paths for parquet files
+
             for sample in samples:
                 for sa in list(Path(output_path,sample).glob('*')):
                     if sa.is_dir():
                         rmtree(sa)
+                out_paths[sample] = glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample']).resolve())}/*.root")
+
 
     """ 
     xAOD + ROOT
