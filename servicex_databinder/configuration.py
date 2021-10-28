@@ -52,12 +52,6 @@ def _validate_config(config: Dict[str, Any]) -> bool:
     elif config['General']['OutputFormat'].lower() != 'parquet' and \
          config['General']['OutputFormat'].lower() != 'root':
         raise ValueError(f"OutputFormat can be either parquet or root")
-    elif config['General']['OutputFormat'].lower() == 'parquet':
-        if 'uproot' not in config['General']['ServiceXBackendName'].lower():
-            raise NotImplementedError(f"Only uproot backend supports parquet format at the moment")
-    elif config['General']['OutputFormat'].lower() == 'root':
-        if 'xaod' not in config['General']['ServiceXBackendName'].lower():
-            raise NotImplementedError(f"Only xaod backend supports root format at the moment")
 
     for sample in config['Sample']:        
         if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys():

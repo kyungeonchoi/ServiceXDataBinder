@@ -57,26 +57,6 @@ def test_validate_config():
     with pytest.raises(ValueError):
         configuration._validate_config(config_wrong_outputformat)
 
-    config_wrong_outputformat_for_uproot = {
-        "General": {
-            "ServiceXBackendName": "uproot",
-            "OutputDirectory": "a",
-            "OutputFormat": "root",
-        },
-        "Sample": [{},]}
-    with pytest.raises(NotImplementedError):
-        configuration._validate_config(config_wrong_outputformat_for_uproot)
-
-    config_wrong_outputformat_for_xaod = {
-        "General": {
-            "ServiceXBackendName": "xaod",
-            "OutputDirectory": "a",
-            "OutputFormat": "parquet",
-        },
-        "Sample": [{},]}
-    with pytest.raises(NotImplementedError):
-        configuration._validate_config(config_wrong_outputformat_for_xaod)
-
     config_without_rucio_did = {
         "General": {
             "ServiceXBackendName": "uproot",
