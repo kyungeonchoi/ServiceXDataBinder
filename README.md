@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.1.7 </p>
+<p align="right"> Release v0.1.8 </p>
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
@@ -48,6 +48,8 @@ ServiceX query can be constructed with either TCut syntax or func-adl.
 
 &nbsp; &nbsp; &nbsp; <sup>1</sup> `Filter` works only for scalar-type of TBranch.
 
+Output format can be either `Apache parquet` or `ROOT ntuple` for `uproot` backend. Only `ROOT ntuple` format is supported for `xAOD` backend.
+
 Please find other example configurations for ATLAS opendata, xAOD, and Uproot ServiceX endpoints.
 
 
@@ -58,7 +60,8 @@ The followings are available options:
 |:--------:|:------:|:------|
 | `ServiceXBackendName` | ServiceX backend name in your `servicex.yaml` file <br> (name should contain either `uproot` or `xAOD` to distinguish the type of transformer) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
-| `OutputFormat` | Output file format of ServiceX delivered data (`parquet` for `uproot` or `root` for `xaod`) | `String` |
+| `OutputFormat` | Output file format of ServiceX delivered data (`parquet` or `root` for `uproot` / `root` for `xaod`) | `String` |
+| `ZipROOTColumns` | Zip columns that share prefix to generate one counter branch (see detail at [uproot readthedoc](https://uproot.readthedocs.io/en/latest/basic.html#writing-ttrees-to-a-file)) | `Boolean` |
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 
@@ -91,8 +94,9 @@ out = sx_db.deliver()
 ```
 
 The function `deliver()` returns a Python nested dictionary: 
-- for `uproot` backend: `out['<SAMPLE>']['<TREE>'] = [ List of output files ]`
-- for `xAOD` backend: `out['<SAMPLE>'] = [ List of output files ]`
+- for `uproot` backend and `parquet` output format: `out['<SAMPLE>']['<TREE>'] = [ List of output parquet files ]`
+- for `uproot` backend and `root` output format: `out['<SAMPLE>'] = [ List of output root files ]`
+- for `xAOD` backend: `out['<SAMPLE>'] = [ List of output root files ]`
 
 
 <!-- ## Currently available 
