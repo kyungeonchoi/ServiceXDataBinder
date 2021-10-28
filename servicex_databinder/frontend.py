@@ -36,8 +36,8 @@ class ServiceXFrontend:
             ignoreCache = False
 
         if 'uproot' in self._backend:
-            # transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
-            transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
+            transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
+            # transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
         elif 'xaod' in self._backend:
             transformer_image = "sslhep/servicex_func_adl_xaod_transformer:develop"
         
