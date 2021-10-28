@@ -8,7 +8,7 @@ ServiceX DataBinder is a Python package for making multiple ServiceX requests an
 
 <!-- [`ServiceX`](https://github.com/ssl-hep/ServiceX) is a scalable HEP event data extraction, transformation and delivery system. 
 
-['ServiceX Client library'](https://github.com/ssl-hep/ServiceX_frontend) provides  -->
+['ServiceX Client library'](https://github.com/ssl-hep/ServiceX_frontend) provides  --> 
 
 ## Installation
 
