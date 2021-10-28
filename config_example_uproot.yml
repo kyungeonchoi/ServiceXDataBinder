@@ -1,7 +1,8 @@
 General:
-  ServiceXBackendName: uproot
+  ServiceXBackendName: uproot_river
   OutputDirectory: ServiceXData_uproot
-  OutputFormat: parquet
+  OutputFormat: root
+  ZipROOTColumns: True
   WriteOutputDict: out_uproot
   IgnoreServiceXCache: False
   
@@ -10,7 +11,7 @@ Sample:
     RucioDID: user.mgeyik:user.mgeyik.mc16_13TeV.346344.PhPy8EG_ttH125_1l.SGTOP1.e7148_a875_r9364_p4346.ll.b_out.root, 
              user.mgeyik:user.mgeyik.mc16_13TeV.346344.PhPy8EG_ttH125_1l.SGTOP1.e7148_a875_r10201_p4346.ll.d_out.root
     Tree: nominal
-    FuncADL: "Select(lambda event: {'jet_e': event.jet_e, 'jet_pt': event.jet_pt})"
+    FuncADL: "Select(lambda event: {'jet_e': event.jet_e, 'jet_pt': event.jet_pt, 'met_met': event.met_met})"
   - Name: ttH
     RucioDID: user.mgeyik:user.mgeyik.mc16_13TeV.346344.PhPy8EG_ttH125_1l.SGTOP1.e7148_a875_r9364_p4346.ll.b_out.root, 
              user.mgeyik:user.mgeyik.mc16_13TeV.346344.PhPy8EG_ttH125_1l.SGTOP1.e7148_a875_r10201_p4346.ll.d_out.root
