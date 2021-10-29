@@ -104,6 +104,34 @@ The function `deliver()` returns a Python nested dictionary:
 - Dataset as Rucio DID + Input file format is ATLAS xAOD + ServiceX delivers output in ROOT TTree format
 - Dataset as XRootD + Input file format is ROOT TTree + ServiceX delivers output in parquet format -->
 
+## Useful tools
+
+### Create Rucio container for multiple DIDs
+
+The current ServiceX generates one request per Rucio DID. 
+It's often the case that a physics analysis needs to process hundreds of DIDs.
+In such cases, the script (`scripts/create_rucio_container.py`) can be used to create one Rucio container per Sample from a yaml file.
+An example yaml file (`scripts/rucio_dids_example.yaml`) is included.
+
+Here is the usage of the script:
+
+```shell
+usage: create_rucio_containers.py [-h] [--dry-run DRY_RUN]
+                                  infile container_name version
+
+Create Rucio containers from multiple DIDs
+
+positional arguments:
+  infile             yaml file contains Rucio DIDs for each Sample
+  container_name     e.g. user.kchoi:user.kchoi.<container-name>.Sample.v1
+  version            e.g. user.kchoi:user.kchoi.fcnc_ana.Sample.<version>
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --dry-run DRY_RUN  Run without creating new Rucio container
+
+```
+
 ## Acknowledgements
 
 Support for this work was provided by the the U.S. Department of Energy, Office of High Energy Physics under Grant No. DE-SC0007890
