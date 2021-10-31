@@ -18,6 +18,8 @@ def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
     def get_n(flist, n):
         return flist[n]
 
+    log.debug(f"Zip vector columns for root output: {zip_common_vector_columns}")
+
     for file in range(len(filelist[0])):
         same_file_list = []
         for tree in sorted(filelist):
@@ -31,20 +33,29 @@ def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
             for infile in same_file_list:
                 tree_dict = {}
                 ak_arr = ak.from_parquet(infile)
-
+                # print(f"infile: {infile}")
                 if zip_common_vector_columns:
                     all_fields = ak_arr.fields
                     vec_fields = [fi for fi in ak_arr.fields if ak_arr[fi].ndim == 2]
                     vec_prefix = [item.split('_')[0] for item in vec_fields]
                     can_vec = [item for item in set(vec_prefix) if vec_prefix.count(item) > 1]
                     for pfix in can_vec:
+                        # print(f"prefix: {pfix}")
                         dict_pfix = {}
                         for item in vec_fields:
                             if item.startswith(pfix):
                                 dict_pfix[item.split('_')[1]] = ak_arr[item]
                         zipped_dict = {}
                         zipped_dict[pfix] = ak.zip(dict_pfix)
-                        outfile[infile.split('/')[-2]] = zipped_dict
+                        tree_dict.update(zipped_dict)
+                        # print(f"zipped dict: {zipped_dict}")
+                    for zip_item in can_vec:
+                        for item in sorted(all_fields):
+                            if item.startswith(zip_item+'_'):
+                                all_fields.pop(all_fields.index(item))
+                    for field in all_fields:
+                        tree_dict[field] = ak_arr[field]
+                    outfile[infile.split('/')[-2]] = tree_dict
                 else:
                     for field in ak_arr.fields:
                         tree_dict[field] = ak_arr[field]
