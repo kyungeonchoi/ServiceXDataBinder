@@ -228,7 +228,7 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 for sa in list(Path(output_path,sample).glob('*')):
                     if sa.is_dir():
                         rmtree(sa)
-                out_paths[sample] = glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample']).resolve())}/*.root")
+                out_paths[sample] = glob(f"{str(Path(config['General']['OutputDirectory'], sample).resolve())}/*.root.*")
 
 
     """ 
