@@ -32,7 +32,7 @@ Sample:
     RucioDID: user.kchoi:user.kchoi.sampleA, 
              user.kchoi:user.kchoi.sampleB
     Tree: nominal
-    FuncADL: "Select(lambda event: {'jet_e': event.jet_e, 'jet_pt': event.jet_pt})"
+    FuncADL: "Select(lambda event: {'jet_e': event.jet_e})"
   - Name: ttW
     RucioDID: user.kchoi:user.kchoi.sampleC
     Tree: nominal
