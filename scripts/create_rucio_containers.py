@@ -16,17 +16,29 @@ try:
 except:
     raise ImportError("Please setup rucio environment!")
 
+def existing_did(scope, name):
+    try:
+        did_client.get_did(scope, name)
+        return True
+    except:
+        return False
+
 
 def create_new_container(user_name, container_name, sample, version, dryrun):
     scope = 'user.' + user_name
     name = scope + '.' + container_name + '.' + sample + '.' + version
     did = scope + ':' + name
-    logger.info("Creating Rucio container: %s", did)
+
     if not dryrun:
-        try:
-            did_client.add_container(scope, name)
-        except:
-            raise ValueError('Failed to create a container: %s', did)
+        if existing_did(scope, name):
+            logger.info("Existing DID! - skip Sample %s", sample)
+            return None
+        else:
+            logger.info("Creating Rucio container: %s", did)
+            try:
+                did_client.add_container(scope, name)
+            except:
+                raise ValueError('Failed to create a container: %s', did)
     else:
         logger.info("Dry run!")
         pass
@@ -80,7 +92,8 @@ if __name__ == "__main__":
 
     logger.info("")
     for sample in samples:        
-        did = create_new_container(user_name, args.container_name, sample, args.version, args.dry_run)        
-        add_datasets(did, sample, sample_rucio_dict, args.dry_run)
-        close_datasets(did, args.dry_run)
+        did = create_new_container(user_name, args.container_name, sample, args.version, args.dry_run)
+        if did:
+            add_datasets(did, sample, sample_rucio_dict, args.dry_run)
+            close_datasets(did, args.dry_run)
         logger.info("")
