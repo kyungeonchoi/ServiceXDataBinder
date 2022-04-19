@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.2.4 </p>
+<p align="right"> Release v0.2.5 </p>
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
