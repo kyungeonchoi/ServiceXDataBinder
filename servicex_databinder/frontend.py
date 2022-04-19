@@ -46,6 +46,7 @@ class ServiceXFrontend:
         async def bound_get_data(sem, sx_ds, query):
             async with sem:
                 return await sx_ds.get_data_parquet_async(query)
+                # return await sx_ds.get_data_parquet_async(query, 'test') # When fix in ServiceX Frontend
 
         async def _get_my_data():
             sem = asyncio.Semaphore(50) # Limit maximum concurrent ServiceX requests
@@ -55,7 +56,7 @@ class ServiceXFrontend:
                 for request in self._servicex_requests:
                     sx_ds = ServiceXDataset(dataset=request['dataset'], \
                                             backend_name=self._config['General']['ServiceXBackendName'], \
-                                            image=transformer_image, \
+                                            # image=transformer_image, \
                                             session_generator=session, \
                                             ignore_cache=ignoreCache)
                     query = request['query']
