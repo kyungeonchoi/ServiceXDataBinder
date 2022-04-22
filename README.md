@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.2.5 </p>
+<p align="right"> Release v0.2.6 </p>
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
@@ -73,7 +73,7 @@ The followings are available options:
 | `Tree` | Name of the input ROOT `TTree` (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
-| `FuncADL` | func-adl expression for a given sample (func adl ONLY) |`String` |
+| `FuncADL` | func-adl expression for a given sample (see [example](config_example_xaod.yml)) |`String` |
 
  <!-- Options exclusively for TCut syntax (CANNOT combine with the option `FuncADL`) -->
 
@@ -93,11 +93,12 @@ sx_db = DataBinder('<CONFIG>.yml')
 out = sx_db.deliver()
 ```
 
-The function `deliver()` returns a Python nested dictionary: 
+The function `deliver()` returns a Python nested dictionary that contains delivered files: 
 - for `uproot` backend and `parquet` output format: `out['<SAMPLE>']['<TREE>'] = [ List of output parquet files ]`
 - for `uproot` backend and `root` output format: `out['<SAMPLE>'] = [ List of output root files ]`
 - for `xAOD` backend: `out['<SAMPLE>'] = [ List of output root files ]`
 
+Input configuration can be also feed as a dictionary.
 
 <!-- ## Currently available 
 - Dataset as Rucio DID + Input file format is ROOT TTree + ServiceX delivers output in parquet format
