@@ -1,25 +1,30 @@
 import yaml
 import logging
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Union
 
 log = logging.getLogger(__name__)
 
-def _load_config(file_path_string: Union[str, pathlib.Path]) -> Dict[str, Any]:
+def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict[str, Any]:
     """Loads, validates, and returns a config file from the provided path.
     Args:
-        file_path_string (Union[str, pathlib.Path]): path to config file
+        input_config (Union[str, pathlib.Path, Dict[str, Any]]): path to config file or config as dict 
     Returns:
         Dict[str, Any]: configuration
     """
-    file_path = pathlib.Path(file_path_string)
-    log.info(f"opening config file: {file_path}")
-    try:
-        config = yaml.safe_load(file_path.read_text())
-        _validate_config(config)
-        return config
-    except:
-        raise FileNotFoundError(f"Exception occured while reading config file: {file_path}")
+    
+    if isinstance(input_config, Dict):
+        _validate_config(input_config)
+        return input_config
+    else:
+        file_path = pathlib.Path(input_config)
+        log.info(f"opening config file: {file_path}")
+        try:
+            config = yaml.safe_load(file_path.read_text())
+            _validate_config(config)
+            return config
+        except:
+            raise FileNotFoundError(f"Exception occured while reading config file: {file_path}")
 
 def _validate_config(config: Dict[str, Any]) -> bool:
     """Returns True if the config file is validated, otherwise raises exceptions.
