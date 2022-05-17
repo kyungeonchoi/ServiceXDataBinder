@@ -32,9 +32,8 @@ def create_new_container(user_name, container_name, sample, version, dryrun, for
     if not dryrun:
         if force and existing_did(scope, name):
             logger.info("Force to attach DIDs to %s", name)
-            return did_client.get_did(scope, name)
-
-        if existing_did(scope, name):
+            return did
+        elif existing_did(scope, name):
             logger.info("Existing DID! - skip Sample %s", sample)
             return None
         else:
@@ -81,9 +80,9 @@ if __name__ == "__main__":
     parser.add_argument('infile', type=str, help='yaml file contains Rucio DIDs for each Sample')
     parser.add_argument('container_name', type=str, help='e.g. user.kchoi:user.kchoi.<container-name>.Sample.v1')
     parser.add_argument('version', type=str, help='e.g. user.kchoi:user.kchoi.fcnc_ana.Sample.<version>')
-    parser.add_argument('--dry-run', type=bool, help='Run without creating new Rucio container')
-    parser.add_argument('-f', type=bool, help='Force to attach DIDs')
-
+    parser.add_argument('--dry-run', type=bool, default=False, help='Run without creating new Rucio container')
+    parser.add_argument('--force', type=bool, default=False, help='Force attach to the existing DID(s)')
+    
     args = parser.parse_args()
 
     logger.info("Loading input file")
@@ -97,7 +96,7 @@ if __name__ == "__main__":
 
     logger.info("")
     for sample in samples:        
-        did = create_new_container(user_name, args.container_name, sample, args.version, args.dry_run, args.f)
+        did = create_new_container(user_name, args.container_name, sample, args.version, args.dry_run, args.force)
         if did:
             add_datasets(did, sample, sample_rucio_dict, args.dry_run)
             close_datasets(did, args.dry_run)
