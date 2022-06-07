@@ -32,7 +32,7 @@ setuptools.setup(name="servicex_databinder",
                  python_requires='>=3.6',
                  install_requires=[
                     "servicex>=2.5",
-                    "tcut-to-qastle>=0.6",                    
+                    "tcut-to-qastle>=0.7",                    
                     "nest-asyncio>=1.5.1",                
                     "tqdm>=4.60.0",
                     "pyarrow>=3.0.0",
