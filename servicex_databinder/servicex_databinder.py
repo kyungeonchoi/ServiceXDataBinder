@@ -1,6 +1,7 @@
 from typing import Union, Dict
 import pathlib
 import logging
+import time
 
 from .configuration import _load_config
 from .request import ServiceXRequest
@@ -22,11 +23,21 @@ class DataBinder:
     def deliver(self, timer=False) -> Dict:
         
         """Get a list of parquet files for each ServiceX request"""
+        t_0 = time.perf_counter()
         try:
             output_parquet_list = self._sx.get_servicex_data()
         except:
             log.exception("Exception occured while gettting data via ServiceX")
             raise
+        t_1 = time.perf_counter()
 
         """Handles ServiceX delivered output"""
-        return _output_handler(self._config, self._requests, output_parquet_list, self._cache_before_requests)
+        out = _output_handler(self._config, self._requests, output_parquet_list, self._cache_before_requests)
+        t_2 = time.perf_counter()
+
+        if timer:
+            print(f"---------------- Timer ----------------")
+            print(f"ServiceX data delivery: {t_1-t_0:0.1f} seconds")
+            print(f"Post-processing       : {t_2-t_1:0.1f} seconds")
+
+        return out
