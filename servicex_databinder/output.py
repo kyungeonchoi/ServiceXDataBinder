@@ -157,96 +157,111 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             o = re.search(r"ServiceXDatasetSource' '\w+'", query)
             return o.group(0).split(" ")[1].strip("\"").replace("'","")
 
-        """
-        Compare cache queries before and after making ServiceX requests. 
-        Copy parquet files for new queries.
-        """
-        all_files_in_requests = []
-        for req, out in zip(request, output):
-            out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
-            Path(out_path).mkdir(parents=True, exist_ok=True)
-            if get_cache_query(req) in cache_before_requests: # Matched query in cache
-                if file_exist_in_out_path(out, out_path): # Already copied
-                    all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                else: # Cached but not copied
+        mergeParquets = False
+        if "MergeParquets" in config['General'].keys():
+            if config['General']['MergeParquets']:
+                mergeParquets = True            
+        
+        if mergeParquets:
+            log.debug("Merge parquet files")
+            rmtree(Path(output_path))
+            for req, out in zip(request, output):
+                out_path = f"{output_path}/{get_tree_name(req['query'])}/"
+                Path(out_path).mkdir(parents=True, exist_ok=True)
+                data = pq.read_table(out)
+                out_file = f"{out_path}{req['Sample']}.parquet"
+                pq.write_table(data, out_file, compression='NONE')
+        else:
+            """
+            Compare cache queries before and after making ServiceX requests. 
+            Copy parquet files for new queries.
+            """
+            all_files_in_requests = []
+            for req, out in zip(request, output):
+                out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
+                Path(out_path).mkdir(parents=True, exist_ok=True)
+                if get_cache_query(req) in cache_before_requests: # Matched query in cache
+                    if file_exist_in_out_path(out, out_path): # Already copied
+                        all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
+                    else: # Cached but not copied
+                        for src in out: copy(src, out_path)
+                        all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
+                else: # New or modified requests
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-            else: # New or modified requests
-                for src in out: copy(src, out_path)
-                all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
 
-        """
-        Clean up parquet files in the output path if they are not in the requests
-        1. delete undefined Samples
-        2. delete root files if exist
-        3. delete Trees not in request
-        4. delete Parquet files not in request
-        """
-        local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*')) if sa.is_dir()]
-        log.debug("synchronizing output path with the config")
-        log.debug(f"  Samples in output directory: {local_samples}, Samples in request: {samples}")
-        samples_not_in_request = list(set(local_samples) ^ set(samples))
-        for sa in samples_not_in_request:
-            log.debug(f"    deleting Sample {sa}")
-            rmtree(Path(output_path, sa))
-
-        for sample in samples:
-            for root_file in list(Path(output_path,sample).glob('*root')):
-                Path.unlink(root_file)
-    
-        for sample in samples:
-            local_trees = []
-            for tree in list(Path(output_path,sample).glob('*')):
-                local_trees.append(str(tree).split('/')[-1])
-            trees_in_request = list(out_paths[sample].keys())
-            trees_not_in_request = list(set(local_trees) ^ set(trees_in_request))
-            log.debug(f"  {sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
-            for tr in trees_not_in_request:
-                log.debug(f"    deleting Tree {tr}")
-                rmtree(Path(output_path, sample, tr))
-            
-        all_files_in_local = []
-        for sample in samples:
-            for tree in list(Path(output_path,sample).glob('*')):
-                all_files_in_local.append(list(Path(tree).glob('*')))
-        all_files_in_local = [f for x in all_files_in_local for f in x]
-        all_files_in_requests = [f for x in all_files_in_requests for f in x]
-        log.debug(f"  #files in local: {len(all_files_in_local)}, #files in requests: {len(all_files_in_requests)}")
-        files_not_in_request = list(set(all_files_in_local) ^ set(all_files_in_requests))
-        if files_not_in_request: 
-            log.debug(f"    deleting {len(files_not_in_request)} files")
-            for fi in files_not_in_request:
-                Path.unlink(fi)
-
-        """
-        Delete parquet file with zero entry
-        """
-        for file in all_files_in_requests:
-            if pq.read_table(file).num_rows == 0:
-                Path.unlink(file)
-        
-        """
-        Dictionary of output file paths for parquet
-        """
-        for sample in samples:
-            for tree in list(Path(output_path,sample).glob('*')):
-                tree = tree.name
-                out_paths[sample][tree] = \
-                    glob(f"{str(Path(config['General']['OutputDirectory'], sample, tree).resolve())}/*.parquet")
-        
-        """
-        Convert to ROOT ntuple if specified
-        """
-        if config['General']['OutputFormat'].lower() == "root":
-            _parquet_to_root(config, out_paths)
-            
-            out_paths.clear() # clear paths for parquet files
+            """
+            Clean up parquet files in the output path if they are not in the requests
+            1. delete undefined Samples
+            2. delete root files if exist
+            3. delete Trees not in request
+            4. delete Parquet files not in request
+            """
+            local_samples = [str(sa).split('/')[-1] for sa in list(Path(output_path).glob('*')) if sa.is_dir()]
+            log.debug("synchronizing output path with the config")
+            log.debug(f"  Samples in output directory: {local_samples}, Samples in request: {samples}")
+            samples_not_in_request = list(set(local_samples) ^ set(samples))
+            for sa in samples_not_in_request:
+                log.debug(f"    deleting Sample {sa}")
+                rmtree(Path(output_path, sa))
 
             for sample in samples:
-                for sa in list(Path(output_path,sample).glob('*')):
-                    if sa.is_dir():
-                        rmtree(sa)
-                out_paths[sample] = glob(f"{str(Path(config['General']['OutputDirectory'], sample).resolve())}/*.root*")
+                for root_file in list(Path(output_path,sample).glob('*root')):
+                    Path.unlink(root_file)
+        
+            for sample in samples:
+                local_trees = []
+                for tree in list(Path(output_path,sample).glob('*')):
+                    local_trees.append(str(tree).split('/')[-1])
+                trees_in_request = list(out_paths[sample].keys())
+                trees_not_in_request = list(set(local_trees) ^ set(trees_in_request))
+                log.debug(f"  {sample} - local trees: {local_trees}, trees in requests: {trees_in_request}")
+                for tr in trees_not_in_request:
+                    log.debug(f"    deleting Tree {tr}")
+                    rmtree(Path(output_path, sample, tr))
+                
+            all_files_in_local = []
+            for sample in samples:
+                for tree in list(Path(output_path,sample).glob('*')):
+                    all_files_in_local.append(list(Path(tree).glob('*')))
+            all_files_in_local = [f for x in all_files_in_local for f in x]
+            all_files_in_requests = [f for x in all_files_in_requests for f in x]
+            log.debug(f"  #files in local: {len(all_files_in_local)}, #files in requests: {len(all_files_in_requests)}")
+            files_not_in_request = list(set(all_files_in_local) ^ set(all_files_in_requests))
+            if files_not_in_request: 
+                log.debug(f"    deleting {len(files_not_in_request)} files")
+                for fi in files_not_in_request:
+                    Path.unlink(fi)
+
+            """
+            Delete parquet file with zero entry
+            """
+            for file in all_files_in_requests:
+                if pq.read_table(file).num_rows == 0:
+                    Path.unlink(file)
+            
+            """
+            Dictionary of output file paths for parquet
+            """
+            for sample in samples:
+                for tree in list(Path(output_path,sample).glob('*')):
+                    tree = tree.name
+                    out_paths[sample][tree] = \
+                        glob(f"{str(Path(config['General']['OutputDirectory'], sample, tree).resolve())}/*.parquet")
+            
+            """
+            Convert to ROOT ntuple if specified
+            """
+            if config['General']['OutputFormat'].lower() == "root":
+                _parquet_to_root(config, out_paths)
+                
+                out_paths.clear() # clear paths for parquet files
+
+                for sample in samples:
+                    for sa in list(Path(output_path,sample).glob('*')):
+                        if sa.is_dir():
+                            rmtree(sa)
+                    out_paths[sample] = glob(f"{str(Path(config['General']['OutputDirectory'], sample).resolve())}/*.root*")
 
 
 
