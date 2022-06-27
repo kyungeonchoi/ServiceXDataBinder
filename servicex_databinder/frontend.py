@@ -37,7 +37,6 @@ class ServiceXFrontend:
 
         if 'uproot' in self._backend:
             transformer_image = "sslhep/servicex_func_adl_uproot_transformer:develop"
-            # transformer_image = "kyungeonchoi/servicex_func_adl_uproot_transformer:0.7"
         elif 'xaod' in self._backend:
             transformer_image = "sslhep/servicex_func_adl_xaod_transformer:develop"
         
@@ -63,7 +62,6 @@ class ServiceXFrontend:
                     query = request['query']
                     sample = request['Sample']
 
-                    # task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query))
                     task = asyncio.ensure_future(bound_get_data(sem, sx_ds, query, sample))
                     tasks.append(task)
                 return await asyncio.gather(*tasks)

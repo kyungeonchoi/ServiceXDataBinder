@@ -33,14 +33,12 @@ def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
             for infile in same_file_list:
                 tree_dict = {}
                 ak_arr = ak.from_parquet(infile)
-                # print(f"infile: {infile}")
                 if zip_common_vector_columns:
                     all_fields = ak_arr.fields
                     vec_fields = [fi for fi in ak_arr.fields if ak_arr[fi].ndim == 2]
                     vec_prefix = [item.split('_')[0] for item in vec_fields]
                     can_vec = [item for item in set(vec_prefix) if vec_prefix.count(item) > 1]
                     for pfix in can_vec:
-                        # print(f"prefix: {pfix}")
                         dict_pfix = {}
                         for item in vec_fields:
                             if item.startswith(pfix):
@@ -48,7 +46,6 @@ def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
                         zipped_dict = {}
                         zipped_dict[pfix] = ak.zip(dict_pfix)
                         tree_dict.update(zipped_dict)
-                        # print(f"zipped dict: {zipped_dict}")
                     for zip_item in can_vec:
                         for item in sorted(all_fields):
                             if item.startswith(zip_item+'_'):
@@ -171,18 +168,12 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             if get_cache_query(req) in cache_before_requests: # Matched query in cache
                 if file_exist_in_out_path(out, out_path): # Already copied
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                    # out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                    #     glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
                 else: # Cached but not copied
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                    # out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                    #         glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
             else: # New or modified requests
                 for src in out: copy(src, out_path)
                 all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
-                # out_paths[req['Sample']][get_tree_name(req['query'])] = \
-                #         glob(f"{str(Path(config['General']['OutputDirectory'], req['Sample'], get_tree_name(req['query'])).resolve())}/*.parquet")
 
         """
         Clean up parquet files in the output path if they are not in the requests
