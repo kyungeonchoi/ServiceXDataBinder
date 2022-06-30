@@ -147,6 +147,17 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         b = list(Path(out_path).glob('*'))
         return set(a) <= set(b)
     
+    # def write_parquet_file(s_t_f):
+    #     # out_path = f"{output_path}/{s_t_f['Tree']}/"
+    #     out_path = f"{output_path}/{s_t_f['Tree']}/{s_t_f['Sample']}/"
+    #     Path(out_path).mkdir(parents=True, exist_ok=True)
+    #     data = pq.read_table(s_t_f['Files'])
+    #     out_file = f"{out_path}{s_t_f['Sample']}.parquet"
+    #     pq.write_table(data, out_file, compression='NONE')
+
+    #     out_paths[s_t_f['Sample']][s_t_f['Tree']] = \
+    #                 glob(f"{str(Path(config['General']['OutputDirectory'], s_t_f['Tree'], s_t_f['Sample']).resolve())}/*.parquet")
+    #     return
 
     """ 
     Uproot + parquet/ROOT
@@ -160,17 +171,36 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         mergeParquets = False
         if "MergeParquets" in config['General'].keys():
             if config['General']['MergeParquets']:
-                mergeParquets = True            
+                mergeParquets = True
         
         if mergeParquets:
             log.debug("Merge parquet files")
             rmtree(Path(output_path))
-            for req, out in zip(request, output):
-                out_path = f"{output_path}/{get_tree_name(req['query'])}/"
+
+            # List of dict with sample name, tree name, all output parquet files
+            sample_tree = [{"Sample":sam['Name'], "Tree":sam['Tree'], "Files":[]} for sam in config['Sample']]            
+            for s_t in sample_tree:
+                for r,o in zip(request, output):
+                    if r['Sample'] == s_t['Sample'] and get_tree_name(r['query']) == s_t['Tree']:
+                        s_t['Files'].extend(o)
+
+            def write_parquet_file(s_t_f):
+                # out_path = f"{output_path}/{s_t_f['Tree']}/"
+                out_path = f"{output_path}/{s_t_f['Tree']}/{s_t_f['Sample']}/"
                 Path(out_path).mkdir(parents=True, exist_ok=True)
-                data = pq.read_table(out)
-                out_file = f"{out_path}{req['Sample']}.parquet"
+                data = pq.read_table(s_t_f['Files'])
+                out_file = f"{out_path}{s_t_f['Sample']}.parquet"
                 pq.write_table(data, out_file, compression='NONE')
+                return
+
+            for stf in sample_tree:
+                write_parquet_file(stf)
+                out_paths[stf['Sample']][stf['Tree']] = \
+                    glob(f"{str(Path(config['General']['OutputDirectory'], stf['Tree'], stf['Sample']).resolve())}/*.parquet")
+
+            # with Pool() as pool:
+            #     pool.map(write_parquet_file, sample_tree)
+
         else:
             """
             Compare cache queries before and after making ServiceX requests. 
