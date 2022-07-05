@@ -11,6 +11,7 @@ from servicex import ServiceXDataset
 import awkward as ak
 import uproot
 import pyarrow.parquet as pq
+from time import perf_counter
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +96,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                          'Number of ServiceX requests and outputs do not agree.' 
                          'Check transformation status at dashboard')
 
+    t0 = perf_counter()
+
     """
     Create output directory
     """
@@ -107,6 +110,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         output_path = 'ServiceXData'
     log.debug(f"output directory is {output_path}")
     
+    t1 = perf_counter()
+
     """
     Prepare output path dictionary
     """
@@ -118,6 +123,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     for sample in config['Sample']:
         out_paths[sample['Name']][sample['Tree']] = {}
     
+    t2 = perf_counter()
+
     """
     Utils
     """
@@ -190,6 +197,7 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 Path(out_path).mkdir(parents=True, exist_ok=True)
                 data = pq.read_table(s_t_f['Files'])
                 out_file = f"{out_path}{s_t_f['Sample']}.parquet"
+                # pq.write_table(data, out_file, row_group_size=10000, compression='NONE')
                 pq.write_table(data, out_file, compression='NONE')
                 return
 
@@ -206,6 +214,9 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
             Compare cache queries before and after making ServiceX requests. 
             Copy parquet files for new queries.
             """
+
+            t3 = perf_counter()
+
             all_files_in_requests = []
             for req, out in zip(request, output):
                 out_path = f"{output_path}/{req['Sample']}/{get_tree_name(req['query'])}/"
@@ -219,6 +230,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 else: # New or modified requests
                     for src in out: copy(src, out_path)
                     all_files_in_requests.append([Path(out_path, str(fi).split('/')[-1]) for fi in out])
+
+            t4 = perf_counter()
 
             """
             Clean up parquet files in the output path if they are not in the requests
@@ -235,9 +248,13 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 log.debug(f"    deleting Sample {sa}")
                 rmtree(Path(output_path, sa))
 
+            t5 = perf_counter()
+
             for sample in samples:
                 for root_file in list(Path(output_path,sample).glob('*root')):
                     Path.unlink(root_file)
+
+            t6 = perf_counter()
         
             for sample in samples:
                 local_trees = []
@@ -249,7 +266,9 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 for tr in trees_not_in_request:
                     log.debug(f"    deleting Tree {tr}")
                     rmtree(Path(output_path, sample, tr))
-                
+            
+            t7 = perf_counter()
+
             all_files_in_local = []
             for sample in samples:
                 for tree in list(Path(output_path,sample).glob('*')):
@@ -263,12 +282,16 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                 for fi in files_not_in_request:
                     Path.unlink(fi)
 
+            t8 = perf_counter()
+
             """
             Delete parquet file with zero entry
             """
             for file in all_files_in_requests:
                 if pq.read_table(file).num_rows == 0:
                     Path.unlink(file)
+            
+            t9 = perf_counter()
             
             """
             Dictionary of output file paths for parquet
@@ -279,6 +302,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
                     out_paths[sample][tree] = \
                         glob(f"{str(Path(config['General']['OutputDirectory'], sample, tree).resolve())}/*.parquet")
             
+            t10 = perf_counter()
+
             """
             Convert to ROOT ntuple if specified
             """
@@ -355,6 +380,22 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
         for yl in list(Path(output_path).glob("*yml")):
             Path.unlink(yl)
 
+    t11 = perf_counter()
 
     log.info("done.")
+
+    if not mergeParquets:
+        print("------ output timing -------")
+        print(f"0: {t1-t0:0.1f} seconds")
+        print(f"1: {t2-t1:0.1f} seconds")
+        print(f"2: {t3-t2:0.1f} seconds")
+        print(f"3: {t4-t3:0.1f} seconds")
+        print(f"4: {t5-t4:0.1f} seconds")
+        print(f"5: {t6-t5:0.1f} seconds")
+        print(f"6: {t7-t6:0.1f} seconds")
+        print(f"7: {t8-t7:0.1f} seconds")
+        print(f"8: {t9-t8:0.1f} seconds")
+        print(f"9: {t10-t9:0.1f} seconds")
+        print(f"10: {t11-t10:0.1f} seconds")
+
     return out_paths
