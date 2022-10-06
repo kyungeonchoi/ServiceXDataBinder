@@ -119,9 +119,10 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     [samples.append(sample['Name']) for sample in config['Sample'] if sample['Name'] not in samples]
     for sample in samples:
         out_paths[sample] = {}
-    for sample in config['Sample']:
-        for tree in sample['Tree'].split(','):
-            out_paths[sample['Name']][tree.strip()] = {}
+    if "uproot" in config['General']['ServiceXBackendName'].lower():
+        for sample in config['Sample']:
+            for tree in sample['Tree'].split(','):
+                out_paths[sample['Name']][tree.strip()] = {}
     
     """
     Utils
@@ -157,9 +158,6 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     Uproot + parquet/ROOT
     """
     if "uproot" in config['General']['ServiceXBackendName'].lower():
-
-
-
         """
         Compare cache queries before and after making ServiceX requests. 
         Copy parquet files for new queries.
