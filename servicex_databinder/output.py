@@ -14,6 +14,10 @@ import pyarrow.parquet as pq
 
 log = logging.getLogger(__name__)
 
+def get_tree_name(query:str) -> str:
+    o = re.search(r"ServiceXDatasetSource' '\w+'", query)
+    return o.group(0).split(" ")[1].strip("\"").replace("'","")
+
 def convert_parquet_to_root(filelist, zip_common_vector_columns = False):
     def get_n(flist, n):
         return flist[n]
@@ -116,7 +120,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     for sample in samples:
         out_paths[sample] = {}
     for sample in config['Sample']:
-        out_paths[sample['Name']][sample['Tree']] = {}
+        for tree in sample['Tree'].split(','):
+            out_paths[sample['Name']][tree.strip()] = {}
     
     """
     Utils
@@ -153,9 +158,7 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     """
     if "uproot" in config['General']['ServiceXBackendName'].lower():
 
-        def get_tree_name(query:str) -> str:
-            o = re.search(r"ServiceXDatasetSource' '\w+'", query)
-            return o.group(0).split(" ")[1].strip("\"").replace("'","")
+
 
         """
         Compare cache queries before and after making ServiceX requests. 

@@ -20,50 +20,62 @@ class ServiceXRequest():
             list_requests.append(self._build_request(sample))
         flist_requests = [request for x in list_requests for request in x] # flatten nested lists
         log.debug(f"number of total ServiceX requests in the config: {len(flist_requests)}")
+        log.debug(f"ServiceX requests in the config: {flist_requests}")
         return flist_requests
 
 
     def _build_request(self, sample: Dict) -> Dict:
+        """Return a list containing ServiceX request(s) of the given sample"""
         requests_sample = []
-        query = self._build_query(sample)
         if 'RucioDID' in sample.keys():
             dids = sample['RucioDID'].split(',')
             if 'uproot' in self._backend:
-                log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(dids)} DID(s)")
-            elif 'xaod' in self._backend:
-                log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
-            for did in dids:
-                requests_sample.append(
-                    {
-                    'Sample': sample['Name'],
-                    'dataset': did.strip(),
-                    'query': query
-                    }
-                )
+                trees = sample['Tree'].split(',')
+                log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s) and {len(trees)} Tree(s)")
+            else:
+                trees = ['dummy']
+                log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")            
+
+            for tree in trees:
+                for did in dids:
+                    requests_sample.append(
+                        {
+                        'Sample': sample['Name'],
+                        'dataset': did.strip(),
+                        'query': self._build_query(sample, tree.strip())
+                        }
+                    )
         elif 'XRootDFiles' in sample.keys():
             xrootd_filelist = [file.strip() for file in sample['XRootDFiles'].split(",")]
             if 'uproot' in self._backend:
-                log.debug(f"  Sample {sample['Name']} - {sample['Tree']} has {len(xrootd_filelist)} file(s)")
-            elif 'xaod' in self._backend:
+                trees = sample['Tree'].split(',')
+                log.debug(f"  Sample {sample['Name']} has {len(xrootd_filelist)} file(s) and {len(trees)} Tree(s)")
+            else:
+                trees = ['xaod']
                 log.debug(f"  Sample {sample['Name']} has {len(xrootd_filelist)} file(s)")
-            requests_sample.append(
-                {
-                'Sample': sample['Name'],
-                'dataset': xrootd_filelist,
-                'query': query
-                } 
-            )
+            for tree in trees:
+                requests_sample.append(
+                    {
+                    'Sample': sample['Name'],
+                    'dataset': xrootd_filelist,
+                    'query': self._build_query(sample, tree)
+                    } 
+                )
         return requests_sample
         
 
-    def _build_query(self, sample: Dict) -> str:
-        """ Option Columns for TCut syntax and Option FuncADL for func-adl syntax"""        
+    def _build_query(self, sample: Dict, tree:str) -> str:
+        """ 
+        Get query for each sample
+        Option Columns for TCut syntax
+        Option FuncADL for func-adl syntax
+        """
         if 'uproot' in self._backend:
             if 'Columns' in sample:
                 if 'Filter' not in sample or sample['Filter'] == None: sample['Filter'] = ''
-                try:
+                try:                    
                     query = tq.translate(
-                        sample['Tree'],
+                        tree,
                         sample['Columns'],
                         sample['Filter']
                     )
@@ -71,7 +83,7 @@ class ServiceXRequest():
                 except:
                     log.exception(f"Exception occured for the query of Sample {sample['Name']}")
             elif 'FuncADL' in sample:
-                query = f"EventDataset('ServiceXDatasetSource', '{sample['Tree']}')." + sample['FuncADL']
+                query = f"EventDataset('ServiceXDatasetSource', '{tree}')." + sample['FuncADL']
                 try:
                     qastle_query = qastle.python_ast_to_text_ast(qastle.insert_linq_nodes(ast.parse(query)))
                     return qastle_query
