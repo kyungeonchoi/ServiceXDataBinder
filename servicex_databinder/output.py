@@ -116,7 +116,8 @@ def _output_handler(config:Dict[str, Any], request, output, cache_before_request
     for sample in samples:
         out_paths[sample] = {}
     for sample in config['Sample']:
-        out_paths[sample['Name']][sample['Tree']] = {}
+        for tree in sample['Tree'].split(','):
+            out_paths[sample['Name']][tree.strip()] = {}
     
     """
     Utils
