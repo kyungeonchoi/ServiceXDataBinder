@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.2.8 </p>
+<!-- <p align="right"> Release v0.2.9 </p> -->
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
@@ -70,7 +70,7 @@ The followings are available options:
 | `Name`   | sample name defined by a user |`String` |
 | `RucioDID` | Rucio Dataset Id (DID) for a given sample; <br> Can be multiple DIDs separated by comma |`String` |
 | `XRootDFiles` | XRootD files (e.g. `root://`) for a given sample; <br> Can be multiple files separated by comma |`String` |
-| `Tree` | Name of the input ROOT `TTree` (`uproot` ONLY) |`String` |
+| `Tree` | Name of the input ROOT `TTree`; <br> Can be multiple `TTree`s separated by comma (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
 | `FuncADL` | func-adl expression for a given sample (see [example](config_example_xaod.yml)) |`String` |
