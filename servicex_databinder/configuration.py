@@ -14,17 +14,36 @@ def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict
     """
     
     if isinstance(input_config, Dict):
-        _validate_config(input_config)
-        return input_config
+        _replace_definition_in_sample_block(input_config)
+        _validate_config(config)
+        return config
     else:
         file_path = pathlib.Path(input_config)
         log.info(f"opening config file: {file_path}")
         try:
             config = yaml.safe_load(file_path.read_text())
+            _replace_definition_in_sample_block(config)
             _validate_config(config)
             return config
         except:
             raise FileNotFoundError(f"Exception occured while reading config file: {file_path}")
+
+
+def _replace_definition_in_sample_block(config: Dict[str, Any]):
+    flag = False
+    if config.get('Definition'):
+        for n, sample in enumerate(config.get('Sample')):
+            for field, value in sample.items():
+                if 'DEF_' in value:
+                    for repre, new_str in config.get('Definition').items():
+                        if repre in value:
+                            log.debug(f"Replace Definition for {sample['Name']} - {field}: {repre} with {new_str}")
+                            config.get('Sample')[n][field] = config.get('Sample')[n][field].replace(repre, new_str)
+                            flag = True
+        return flag
+    else:
+        return flag
+
 
 def _validate_config(config: Dict[str, Any]) -> bool:
     """Returns True if the config file is validated, otherwise raises exceptions.
