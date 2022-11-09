@@ -56,7 +56,7 @@ Please find other example configurations for ATLAS opendata, xAOD, and Uproot Se
 The followings are available options:
 
 <!-- `General` block: -->
-| Option for `General` | Description       | DataType |
+| Option for `General` block | Description       | DataType |
 |:--------:|:------:|:------|
 | `ServiceXBackendName` | ServiceX backend name in your `servicex.yaml` file <br> (name should contain either `uproot` or `xAOD` to distinguish the type of transformer) | `String` |
 | `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
@@ -65,7 +65,7 @@ The followings are available options:
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 
-| Option for `Sample` | Description       |DataType |
+| Option for `Sample` block | Description       |DataType |
 |:--------:|:------:|:------|
 | `Name`   | sample name defined by a user |`String` |
 | `RucioDID` | Rucio Dataset Id (DID) for a given sample; <br> Can be multiple DIDs separated by comma |`String` |
@@ -79,11 +79,30 @@ The followings are available options:
 
  <!-- Option for func-adl expression (CANNOT combine with the option `Fitler` and `Columns`) -->
 
-<!-- ## Installation
+A config file can be simplified by utilizing `Definition` block. You can define placeholders under `Definition` block, which will replace all matched placeholders in the values of `Sample` block. Note that placeholders must start with `DEF_`. The example configuration file can be also written as below with `Definition` block:
 
-```python
-pip -m install servicex_databinder
-``` -->
+```yaml
+General:
+  ServiceXBackendName: uproot
+  OutputDirectory: /path/to/output
+  OutputFormat: parquet
+  
+Sample:
+  - Name: ttH
+    RucioDID: DEF_ttH_dids
+    Tree: nominal
+    FuncADL: DEF_nominal_selection
+  - Name: ttW
+    RucioDID: user.kchoi:user.kchoi.sampleC
+    Tree: nominal
+    Filter: n_jet > 5 
+    Columns: jet_e, jet_pt
+
+Definition:
+  DEF_ttH_dids: user.kchoi:user.kchoi.sampleA, 
+             user.kchoi:user.kchoi.sampleB
+  DEF_nominal_selection: "Select(lambda event: {'jet_e': event.jet_e})"
+```
 
 ## Deliver data
 
