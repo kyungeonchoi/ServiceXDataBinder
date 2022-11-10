@@ -22,11 +22,12 @@ class DataBinderDataset:
         self.ignoreCache = False
         if 'IgnoreServiceXCache' in self._config['General'].keys():
             self.ignoreCache = self._config['General']['IgnoreServiceXCache']
-            
-        self.output_path = Path('ServiceXData').absolute()
-        self.output_path.mkdir(parents=True, exist_ok=True)
+                    
         if 'OutputDirectory' in config['General'].keys():
             self.output_path = Path(config['General']['OutputDirectory']).absolute()
+            self.output_path.mkdir(parents=True, exist_ok=True)
+        else:
+            self.output_path = Path('ServiceXData').absolute()
             self.output_path.mkdir(parents=True, exist_ok=True)
 
 
@@ -67,6 +68,7 @@ class DataBinderDataset:
                 for file in files_not_in_local:
                     await os.link(Path(Path(files[0]).parent, file), Path(target_path, file))
 
+        # return 
 
     async def get_data(self):
         tasks = []

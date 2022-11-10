@@ -1,8 +1,7 @@
 import yaml
-import logging
 import pathlib
 from typing import Any, Dict, Union
-
+import logging
 log = logging.getLogger(__name__)
 
 def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict[str, Any]:
