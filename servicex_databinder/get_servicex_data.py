@@ -39,24 +39,39 @@ class DataBinderDataset:
                                     ignore_cache=self.ignoreCache
                     )
             query = req['query']
-            files = await sx_ds.get_data_parquet_async(query)
+            title = f"{req['Sample']} - {req['tree']}"
+            files = await sx_ds.get_data_parquet_async(query, title=title)
 
-        # shutil.rmtree to remove target directory
+        print(f"Copying files for {req['Sample']}")
+        target_path = Path(self.output_path, req['Sample'], req['tree'])
 
-        print(f"Copying files for {req['Sample']}")        
-        Path(self.output_path, req['Sample'], req['tree']).mkdir(parents=True, exist_ok=True)
-        for file in files:
-            outfile = Path(self.output_path, req['Sample'], Path(file).name)
-            await os.link(file, outfile)
+        if not target_path.exists():
+            target_path.mkdir(parents=True, exist_ok=True)
+            for file in files:
+                outfile = Path(target_path, Path(file).name)
+                await os.link(file, outfile)
+        else:
+            servicex_files = {Path(file).name for file in files}
+            local_files = {Path(file).name for file in list(target_path.glob("*"))}
+            
+            if servicex_files == local_files:
+                pass
+            else:
+                # delete files in local but not in servicex
+                files_not_in_servicex = local_files.difference(servicex_files)
+                for file in files_not_in_servicex:
+                    await os.unlink(Path(target_path, file))
+
+                # copy files in servicex but not in local
+                files_not_in_local = servicex_files.difference(local_files)
+                for file in files_not_in_local:
+                    await os.link(Path(Path(files[0]).parent, file), Path(target_path, file))
 
 
     async def get_data(self):
         tasks = []
 
         for req in self._servicex_requests:
-
-            # Check local cache and only append new request
-
             tasks.append(self.deliver_and_copy(req))
 
         return await asyncio.gather(*tasks)
