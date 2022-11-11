@@ -3,8 +3,9 @@ from typing import Any, Dict, List
 
 from servicex import ServiceXDataset
 from aiohttp import ClientSession
-from aiofiles import os
+# from aiofiles import os
 import asyncio
+from shutil import copy
 
 from .output_handler import OutputHandler
 
@@ -52,7 +53,8 @@ class DataBinderDataset:
             target_path.mkdir(parents=True, exist_ok=True)
             for file in files:
                 outfile = Path(target_path, Path(file).name)
-                await os.link(file, outfile)
+                copy(file, outfile)
+                # await os.link(file, outfile)
         else: # hmm - target directory already there
             servicex_files = {Path(file).name for file in files}
             local_files = {Path(file).name for file in list(target_path.glob("*"))}
@@ -63,7 +65,8 @@ class DataBinderDataset:
                 # copy files in servicex but not in local
                 files_not_in_local = servicex_files.difference(local_files)
                 for file in files_not_in_local:
-                    await os.link(Path(Path(files[0]).parent, file), Path(target_path, file))
+                    copy(Path(Path(files[0]).parent, file), Path(target_path, file))
+                    # await os.link(Path(Path(files[0]).parent, file), Path(target_path, file))
 
                 # # delete files in local but not in servicex - cannot do this because more than 1 Rucio DID can exist for given sample
                 # files_not_in_servicex = local_files.difference(servicex_files)
