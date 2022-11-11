@@ -45,7 +45,7 @@ class OutputHandler:
             with open(file_out_paths, 'w') as f:
                 log.debug(f"write a yaml file containg delivered file paths: {f.name}")
                 yaml.dump(out_paths_dict, f, default_flow_style=False)
-            log.info(f"File containing delivered file paths: {file_out_paths}")
+            log.info(f"Wrote a file containing delivered file paths: {file_out_paths}")
         else:
             for yl in list(Path(self.output_path).glob("*yml")):
                 Path.unlink(yl)
