@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Any, Dict, List
-import yaml
 
 from servicex import ServiceXDataset
 from aiohttp import ClientSession
@@ -32,7 +31,7 @@ class DataBinderDataset:
 
 
     async def deliver_and_copy(self, req):
-        print(f"ServiceX running for {req['Sample']}")
+        # print(f"ServiceX running for {req['Sample']}")
         async with ClientSession() as session:
             sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                     backend_name=self._config['General']['ServiceXBackendName'],
@@ -43,7 +42,7 @@ class DataBinderDataset:
             title = f"{req['Sample']} - {req['tree']}"
             files = await sx_ds.get_data_parquet_async(query, title=title)
 
-        print(f"Copying files for {req['Sample']}")
+        # print(f"Copying files for {req['Sample']}")
         target_path = Path(self.output_path, req['Sample'], req['tree'])
 
         # Add files based on the returned file list from ServiceX 
@@ -71,14 +70,20 @@ class DataBinderDataset:
                 # for file in files_not_in_servicex:
                 #     await os.unlink(Path(target_path, file))
 
+        log.info(f"{req['Sample']} - {req['tree']} is delivered")
+
 
         
         # return 
 
     async def get_data(self):
+        log.info(f"Deliver via ServiceX endpoint: {self._config['General']['ServiceXBackendName']}")
+        log.info("Samples in the config file")
+
         tasks = []
 
         for req in self._servicex_requests:
+            log.info(f"   {req['Sample']} - {req['tree']}")
             tasks.append(self.deliver_and_copy(req))
         
         await asyncio.gather(*tasks)

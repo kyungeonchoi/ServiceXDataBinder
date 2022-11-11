@@ -41,9 +41,11 @@ class OutputHandler:
     def write_output_paths_dict(self, out_paths_dict):
         """ Write yaml of output dict """
         if 'WriteOutputDict' in self._config['General'].keys():
-            with open(f"{self.output_path}/{self._config['General']['WriteOutputDict']}.yml", 'w') as f:
+            file_out_paths = f"{self.output_path}/{self._config['General']['WriteOutputDict']}.yml"
+            with open(file_out_paths, 'w') as f:
                 log.debug(f"write a yaml file containg delivered file paths: {f.name}")
                 yaml.dump(out_paths_dict, f, default_flow_style=False)
+            log.info(f"File containing delivered file paths: {file_out_paths}")
         else:
             for yl in list(Path(self.output_path).glob("*yml")):
                 Path.unlink(yl)

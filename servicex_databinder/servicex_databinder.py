@@ -19,21 +19,6 @@ class DataBinder:
         self._sx_db = DataBinderDataset(self._config, self._requests)
 
 
-    def deliver(self, timer=False) -> Dict:
+    def deliver(self) -> Dict:
 
         return asyncio.run(self._sx_db.get_data())
-        
-        # self._sx_db.output_path
-
-        # """Get a list of parquet files for each ServiceX request"""
-        # t_0 = time.perf_counter()
-        
-        # t_1 = time.perf_counter()
-
-        
-        # if timer:
-        #     print(f"---------------- Timer ----------------")
-        #     print(f"ServiceX data delivery: {t_1-t_0:0.1f} seconds")
-        #     print(f"Post-processing       : {t_2-t_1:0.1f} seconds")
-
-        # return out
