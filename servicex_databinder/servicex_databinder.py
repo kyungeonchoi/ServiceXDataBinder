@@ -18,6 +18,7 @@ class DataBinder:
         self._requests = ServiceXRequest(self._config).get_requests()
         self._sx_db = DataBinderDataset(self._config, self._requests)
 
+        log.info(f"  {len(self._config.get('Sample'))} Samples and {len(self._requests)} ServiceX requests")
 
     def deliver(self) -> Dict:
 

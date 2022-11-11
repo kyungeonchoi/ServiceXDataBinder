@@ -70,7 +70,7 @@ class DataBinderDataset:
                 # for file in files_not_in_servicex:
                 #     await os.unlink(Path(target_path, file))
 
-        log.info(f"{req['Sample']} - {req['tree']} is delivered")
+        log.info(f"{req['Sample']} | {req['dataset']} | {req['tree']} is delivered")
 
 
         
@@ -83,7 +83,7 @@ class DataBinderDataset:
         tasks = []
 
         for req in self._servicex_requests:
-            log.info(f"   {req['Sample']} - {req['tree']}")
+            log.info(f"   {req['Sample']} | {req['dataset']} | {req['tree']}")
             tasks.append(self.deliver_and_copy(req))
         
         await asyncio.gather(*tasks)
