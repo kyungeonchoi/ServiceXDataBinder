@@ -31,7 +31,7 @@ class DataBinderDataset:
 
 
     async def deliver_and_copy(self, req):
-        # print(f"ServiceX running for {req['Sample']}")
+        # ServiceX
         async with ClientSession() as session:
             sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                     backend_name=self._config['General']['ServiceXBackendName'],
@@ -42,10 +42,10 @@ class DataBinderDataset:
             title = f"{req['Sample']} - {req['tree']}"
             files = await sx_ds.get_data_parquet_async(query, title=title)
 
-        # print(f"Copying files for {req['Sample']}")
+        # Copy
         target_path = Path(self.output_path, req['Sample'], req['tree'])
 
-        # Add files based on the returned file list from ServiceX 
+        # Outfile paths dictionary - add files based on the returned file list from ServiceX 
         self.out_paths_dict[req['Sample']][req['tree']].extend([str(Path(target_path, Path(file).name)) for file in files])
 
         if not target_path.exists(): # easy - target directory doesn't exist
@@ -78,12 +78,12 @@ class DataBinderDataset:
 
     async def get_data(self):
         log.info(f"Deliver via ServiceX endpoint: {self._config['General']['ServiceXBackendName']}")
-        log.info("Samples in the config file")
+        log.debug("Samples in the config file")
 
         tasks = []
 
         for req in self._servicex_requests:
-            log.info(f"   {req['Sample']} | {req['dataset']} | {req['tree']}")
+            log.debug(f"   {req['Sample']} | {req['dataset']} | {req['tree']}")
             tasks.append(self.deliver_and_copy(req))
         
         await asyncio.gather(*tasks)
