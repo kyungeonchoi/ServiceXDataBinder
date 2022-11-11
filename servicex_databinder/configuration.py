@@ -17,7 +17,7 @@ def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict
         return input_config
     else:
         file_path = pathlib.Path(input_config)
-        log.info(f"opening config file: {file_path}")
+        log.info(f"Loading DataBinder config file: {file_path}")
         try:
             config = yaml.safe_load(file_path.read_text())
             _validate_config(config)
