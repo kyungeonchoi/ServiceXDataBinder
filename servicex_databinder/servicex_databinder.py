@@ -20,6 +20,6 @@ class DataBinder:
 
         log.info(f"  {len(self._config.get('Sample'))} Samples and {len(self._requests)} ServiceX requests")
 
-    def deliver(self) -> Dict:
+    def deliver(self, overall_progress_only: bool = False) -> Dict:
 
-        return asyncio.run(self._sx_db.get_data())
+        return asyncio.run(self._sx_db.get_data(overall_progress_only))

@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from servicex import ServiceXDataset
+from servicex import ServiceXDataset, utils
 from aiohttp import ClientSession
 import asyncio
 from shutil import copy
-import tqdm.asyncio
+from tqdm.asyncio import tqdm
 
 from .output_handler import OutputHandler
 
@@ -33,10 +33,16 @@ class DataBinderDataset:
 
     async def deliver_and_copy(self, req):
         # ServiceX
+
+        if self._progresbar:
+            callback_factory = None
+        else:
+            callback_factory = utils._run_default_wrapper
+        
         async with ClientSession(timeout=3600) as session:
             sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                     backend_name=self._config['General']['ServiceXBackendName'],
-                                    # status_callback_factory = None,
+                                    status_callback_factory = callback_factory,
                                     session_generator=session,
                                     ignore_cache=self.ignoreCache
                     )
@@ -73,15 +79,14 @@ class DataBinderDataset:
                 # for file in files_not_in_servicex:
                 #     await os.unlink(Path(target_path, file))
 
-        # log.info(f"{req['Sample']} | {req['dataset']} | {req['tree']} is delivered")
+        return f"{req['Sample']} | {req['dataset']} | {req['tree']} is delivered"
 
 
-        
-        # return 
-
-    async def get_data(self):
+    async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self._config['General']['ServiceXBackendName']}")
         log.debug("Samples in the config file")
+
+        self._progresbar = overall_progress_only
 
         tasks = []
 
@@ -91,20 +96,23 @@ class DataBinderDataset:
         
         # await asyncio.gather(*tasks)
 
-        # responses = [await f for f in tqdm.tqdm(asyncio.as_completed(tasks), total=len(tasks))]
-        pbar = tqdm.tqdm(total=len(tasks),
-                        unit="request",
-                        dynamic_ncols=True,
-                        # position=0,
-                        leave=False,
-                        colour='ffa500',
-                        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]",
-                        )
+        if overall_progress_only:
+            pbar = tqdm(total=len(tasks),
+                            unit="request",
+                            dynamic_ncols=True,
+                            colour='#ffa500',
+                            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]",
+                            )
         for f in asyncio.as_completed(tasks):
             value = await f
-            # pbar.set_description(value)
-            pbar.update()
-        
+            if overall_progress_only:
+                pbar.set_description(value)
+                pbar.update()
+            else:
+                log.info(value)
+
+        if overall_progress_only: pbar.close()
+
         self.output_handler.write_output_paths_dict(self.out_paths_dict)
 
         return self.out_paths_dict
