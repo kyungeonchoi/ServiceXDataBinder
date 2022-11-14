@@ -6,6 +6,7 @@ import asyncio
 from .configuration import _load_config
 from .request import ServiceXRequest
 from .get_servicex_data import DataBinderDataset
+from .output_handler import OutputHandler
 
 import logging
 log = logging.getLogger(__name__)
@@ -22,4 +23,8 @@ class DataBinder:
 
     def deliver(self, overall_progress_only: bool = False) -> Dict:
 
-        return asyncio.run(self._sx_db.get_data(overall_progress_only))
+        out_paths_dict = asyncio.run(self._sx_db.get_data(overall_progress_only))
+
+        OutputHandler(self._config).clean_up_files_not_in_requests(out_paths_dict)
+
+        return out_paths_dict

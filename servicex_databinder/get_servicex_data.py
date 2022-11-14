@@ -24,7 +24,7 @@ class DataBinderDataset:
         self._outputformat = self._config.get('General')['OutputFormat'].lower()
 
         self.output_handler = OutputHandler(config)
-        self.output_path = self.output_handler.get_outpath()
+        self.output_path = self.output_handler.output_path
         self.out_paths_dict = self.output_handler.out_paths_dict
         self.update_out_paths_dict = self.output_handler.update_output_paths_dict
         self.parquet_to_root = self.output_handler.parquet_to_root
@@ -72,6 +72,18 @@ class DataBinderDataset:
         else: # hmm - target directory already there
             servicex_files = {Path(file).stem for file in files}
             local_files = {Path(file).stem for file in list(target_path.glob("*"))}
+
+            if len(local_files):
+                if Path(list(target_path.glob("*"))[0]).suffix.strip(".") != self._outputformat:
+                    for file in files:
+                        if self._outputformat == "parquet":
+                            outfile = Path(target_path, Path(file).name)
+                            copy(file, outfile)
+                        elif self._outputformat == "root":
+                            outfile = Path(target_path, Path(file).name).with_suffix('.root')
+                            self.parquet_to_root(req['tree'], file, outfile)
+                    return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is delivered"
+
             if servicex_files == local_files: # one RucioDID for this sample and files are already there
                 return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is already delivered"
             else:
