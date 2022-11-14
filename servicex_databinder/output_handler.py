@@ -2,6 +2,7 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict
 from glob import glob
+import time
 
 import pyarrow.parquet as pq
 import awkward as ak
@@ -110,3 +111,5 @@ class OutputHandler:
                     
                     for tbd in files_local.difference(files_request):
                         Path.unlink(tbd)
+        
+        return
