@@ -5,6 +5,7 @@ from servicex import ServiceXDataset
 from aiohttp import ClientSession
 import asyncio
 from shutil import copy
+import tqdm.asyncio
 
 from .output_handler import OutputHandler
 
@@ -32,13 +33,15 @@ class DataBinderDataset:
 
     async def deliver_and_copy(self, req):
         # ServiceX
-        async with ClientSession() as session:
+        async with ClientSession(timeout=3600) as session:
             sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                     backend_name=self._config['General']['ServiceXBackendName'],
+                                    # status_callback_factory = None,
                                     session_generator=session,
                                     ignore_cache=self.ignoreCache
                     )
             query = req['query']
+            
             title = f"{req['Sample']} - {req['tree']}"
             files = await sx_ds.get_data_parquet_async(query, title=title)
 
@@ -70,7 +73,7 @@ class DataBinderDataset:
                 # for file in files_not_in_servicex:
                 #     await os.unlink(Path(target_path, file))
 
-        log.info(f"{req['Sample']} | {req['dataset']} | {req['tree']} is delivered")
+        # log.info(f"{req['Sample']} | {req['dataset']} | {req['tree']} is delivered")
 
 
         
@@ -86,7 +89,21 @@ class DataBinderDataset:
             log.debug(f"   {req['Sample']} | {req['dataset']} | {req['tree']}")
             tasks.append(self.deliver_and_copy(req))
         
-        await asyncio.gather(*tasks)
+        # await asyncio.gather(*tasks)
+
+        # responses = [await f for f in tqdm.tqdm(asyncio.as_completed(tasks), total=len(tasks))]
+        pbar = tqdm.tqdm(total=len(tasks),
+                        unit="request",
+                        dynamic_ncols=True,
+                        # position=0,
+                        leave=False,
+                        colour='ffa500',
+                        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]",
+                        )
+        for f in asyncio.as_completed(tasks):
+            value = await f
+            # pbar.set_description(value)
+            pbar.update()
         
         self.output_handler.write_output_paths_dict(self.out_paths_dict)
 
