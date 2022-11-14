@@ -2,6 +2,10 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict
 
+import pyarrow.parquet as pq
+import awkward as ak
+import uproot
+
 from .configuration import _load_config
 
 import logging
@@ -36,6 +40,19 @@ class OutputHandler:
             self.output_path = Path('ServiceXData').absolute()
             self.output_path.mkdir(parents=True, exist_ok=True)
             return self.output_path
+
+
+    def parquet_to_root(self, tree_name, pq_file, root_file):
+        if pq.read_metadata(pq_file).num_rows == 0:
+            pass
+        else:
+            outfile = uproot.recreate(root_file)
+            tree_dict = {}
+            ak_arr = ak.from_parquet(pq_file)
+            for field in ak_arr.fields:
+                tree_dict[field] = ak_arr[field]
+            outfile[tree_name] = tree_dict
+            outfile.close()
 
 
     def write_output_paths_dict(self, out_paths_dict):
