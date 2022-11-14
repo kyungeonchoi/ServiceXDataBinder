@@ -54,6 +54,24 @@ class OutputHandler:
             outfile[tree_name] = tree_dict
             outfile.close()
 
+    
+    def update_output_paths_dict(self, req, files, format:str = "parquet"):
+        
+        # Outfile paths dictionary - add files based on the returned file list from ServiceX
+        target_path = Path(self.output_path, req['Sample'], req['tree'])
+        paths_in_output_dict = self.out_paths_dict[req['Sample']][req['tree']]
+        if format == "parquet":
+            new_files = [str(Path(target_path, Path(file).name)) for file in files]
+        elif format == "root":
+            new_files = [str(Path(target_path, Path(file).name).with_suffix('.root')) for file in files]
+
+        if paths_in_output_dict:
+            output_dict = list(set(paths_in_output_dict + new_files))
+        else:
+            output_dict = new_files
+
+        self.out_paths_dict[req['Sample']][req['tree']] = output_dict
+
 
     def write_output_paths_dict(self, out_paths_dict):
         """ Write yaml of output dict """

@@ -26,6 +26,7 @@ class DataBinderDataset:
         self.output_handler = OutputHandler(config)
         self.output_path = self.output_handler.get_outpath()
         self.out_paths_dict = self.output_handler.out_paths_dict
+        self.update_out_paths_dict = self.output_handler.update_output_paths_dict
         self.parquet_to_root = self.output_handler.parquet_to_root
         
         self.ignoreCache = False
@@ -53,24 +54,11 @@ class DataBinderDataset:
             
             title = f"{req['Sample']} - {req['tree']}"
             files = await sx_ds.get_data_parquet_async(query, title=title)
-
         
+        # Update Outfile paths dictionary - add files based on the returned file list from ServiceX
+        self.update_out_paths_dict(req, files, self._outputformat)
+
         # Copy
-        
-        # Outfile paths dictionary - add files based on the returned file list from ServiceX
-        paths_in_output_dict = self.out_paths_dict[req['Sample']][req['tree']]
-        if self._outputformat == "parquet":
-            new_files = [str(Path(target_path, Path(file).name)) for file in files]
-        elif self._outputformat == "root":
-            new_files = [str(Path(target_path, Path(file).name).with_suffix('.root')) for file in files]
-
-        if paths_in_output_dict:
-            output_dict = list(set(paths_in_output_dict + new_files))
-            # output_dict = list(set(output_dict))
-        else:
-            output_dict = new_files
-        self.out_paths_dict[req['Sample']][req['tree']] = output_dict
-
         if not target_path.exists(): # easy - target directory doesn't exist
             target_path.mkdir(parents=True, exist_ok=True)
             for file in files:
