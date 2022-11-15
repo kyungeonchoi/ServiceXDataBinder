@@ -1,8 +1,8 @@
 import yaml
 from pathlib import Path
 from typing import Any, Dict
-from glob import glob
 import time
+from shutil import rmtree
 
 import pyarrow.parquet as pq
 import awkward as ak
@@ -91,15 +91,21 @@ class OutputHandler:
 
     def clean_up_files_not_in_requests(self, out_paths_dict):
 
-        samples = out_paths_dict.keys()
+        samples_in_requests = out_paths_dict.keys()
+        samples_local = [sa.name for sa in self.output_path.iterdir() if sa.is_dir()]
 
         if self._backend == "uproot":
-            for sample in samples:
-                for tree in out_paths_dict[sample].keys():
-                    files_local = set(Path(self.output_path, sample, tree).glob("*"))
-                    files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
-                    
-                    for tbd in files_local.difference(files_request):
-                        Path.unlink(tbd)
-        
+            for sample in samples_local:
+                if not sample in samples_in_requests:
+                    rmtree(Path(self.output_path, sample))
+                else:
+                    # for tree in out_paths_dict[sample].keys():
+                    for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
+                        if tree in out_paths_dict[sample].keys():
+                            files_local = set(Path(self.output_path, sample, tree).glob("*"))
+                            files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
+                            for tbd in files_local.difference(files_request):
+                                Path.unlink(tbd)
+                        else:
+                            rmtree(Path(self.output_path, sample, tree))        
         return
