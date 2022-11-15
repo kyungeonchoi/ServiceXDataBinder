@@ -8,15 +8,13 @@ import pyarrow.parquet as pq
 import awkward as ak
 import uproot
 
-from .configuration import _load_config
-
 import logging
 log = logging.getLogger(__name__)
 
 class OutputHandler:
 
     def __init__(self, config: Dict[str, Any]) -> None:
-        self._config = _load_config(config)        
+        self._config = config
         if "uproot" in config['General']['ServiceXBackendName'].lower():
             self._backend = "uproot"
         elif "xaod" in config['General']['ServiceXBackendName'].lower():
