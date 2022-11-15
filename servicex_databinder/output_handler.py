@@ -97,6 +97,7 @@ class OutputHandler:
                     self.out_paths_dict[sample['Name']] = [str(Path(f)) for f in Path(fpath).glob("*")]
                     log.info(f"  {sample['Name']} | {fpath} is from local path")
 
+
     def write_output_paths_dict(self, out_paths_dict):
         """ Write yaml of output dict """
         if 'WriteOutputDict' in self._config['General'].keys():

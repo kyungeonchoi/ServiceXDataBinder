@@ -137,7 +137,7 @@ class DataBinderDataset:
 
 
     async def get_data(self, overall_progress_only):
-        log.info(f"Deliver via ServiceX endpoint: {self._config['General']['ServiceXBackendName']}")
+        log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
 
         self._progresbar = overall_progress_only
 

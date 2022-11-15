@@ -32,7 +32,6 @@ class DataBinder:
         x.start()
 
         if len(self._sx_db.failed_request):
-            log.warning(f"{len(self._sx_db.failed_request)} failed delivery request(s)")
-            log.warning(f"More details - {self._sx_db.endpoint}")
+            log.warning(f"{len(self._sx_db.failed_request)} failed delivery request(s)")            
 
         return out_paths_dict, self._sx_db.failed_request
