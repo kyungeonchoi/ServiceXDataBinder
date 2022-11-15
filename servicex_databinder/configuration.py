@@ -1,8 +1,7 @@
 import yaml
-import logging
 import pathlib
 from typing import Any, Dict, Union
-
+import logging
 log = logging.getLogger(__name__)
 
 def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict[str, Any]:
@@ -19,7 +18,7 @@ def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict
         return config
     else:
         file_path = pathlib.Path(input_config)
-        log.info(f"opening config file: {file_path}")
+        log.info(f"Loading DataBinder config file: {file_path}")
         try:
             config = yaml.safe_load(file_path.read_text())
             _replace_definition_in_sample_block(config)
@@ -78,8 +77,8 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         raise ValueError(f"OutputFormat can be either parquet or root")
 
     for sample in config['Sample']:        
-        if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys():
-            raise KeyError(f"Sample {sample['Name']} should have RucioDID")
+        if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys() and 'LocalPath' not in sample.keys():
+            raise KeyError(f"Please specify a valid input option for Sample {sample['Name']} e.g. RucioDID")
         if 'RucioDID' in sample.keys():
             for did in sample['RucioDID'].split(","):
                 if len(did.split(":")) != 2:

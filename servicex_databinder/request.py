@@ -42,6 +42,7 @@ class ServiceXRequest():
                         {
                         'Sample': sample['Name'],
                         'dataset': did.strip(),
+                        'tree': tree.strip(),
                         'query': self._build_query(sample, tree.strip())
                         }
                     )
@@ -51,13 +52,14 @@ class ServiceXRequest():
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has {len(xrootd_filelist)} file(s) and {len(trees)} Tree(s)")
             else:
-                trees = ['xaod']
+                trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(xrootd_filelist)} file(s)")
             for tree in trees:
                 requests_sample.append(
                     {
                     'Sample': sample['Name'],
                     'dataset': xrootd_filelist,
+                    'tree': tree.strip(),
                     'query': self._build_query(sample, tree)
                     } 
                 )
