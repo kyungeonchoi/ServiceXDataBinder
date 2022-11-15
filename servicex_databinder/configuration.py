@@ -58,8 +58,8 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         raise ValueError(f"OutputFormat can be either parquet or root")
 
     for sample in config['Sample']:        
-        if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys():
-            raise KeyError(f"Sample {sample['Name']} should have RucioDID")
+        if 'RucioDID' not in sample.keys() and 'XRootDFiles' not in sample.keys() and 'LocalPath' not in sample.keys():
+            raise KeyError(f"Please specify a valid input option for Sample {sample['Name']} e.g. RucioDID")
         if 'RucioDID' in sample.keys():
             for did in sample['RucioDID'].split(","):
                 if len(did.split(":")) != 2:

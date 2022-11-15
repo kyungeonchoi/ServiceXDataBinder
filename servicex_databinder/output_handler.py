@@ -75,6 +75,16 @@ class OutputHandler:
 
         self.out_paths_dict[req['Sample']][req['tree']] = output_dict
 
+    
+    def add_local_output_paths_dict(self):
+        local_samples = [sample for sample in self._config.get('Sample') if 'LocalPath' in sample.keys()]
+        for sample in local_samples:
+            for tree, fpath in zip(sample['Tree'].split(','), sample['LocalPath'].split(',')):
+                tree = tree.strip()
+                fpath = fpath.strip()
+                self.out_paths_dict[sample['Name']][tree] = [str(Path(f)) for f in Path(fpath).glob("*")]
+                log.info(f"  {sample['Name']} | {tree} | {fpath} is from local path")
+
 
     def write_output_paths_dict(self, out_paths_dict):
         """ Write yaml of output dict """

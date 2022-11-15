@@ -27,6 +27,7 @@ class DataBinderDataset:
         self.output_path = self.output_handler.output_path
         self.out_paths_dict = self.output_handler.out_paths_dict
         self.update_out_paths_dict = self.output_handler.update_output_paths_dict
+        self.add_local_output_paths_dict = self.output_handler.add_local_output_paths_dict
         self.parquet_to_root = self.output_handler.parquet_to_root
         
         self.ignoreCache = False
@@ -60,7 +61,7 @@ class DataBinderDataset:
                 files = await sx_ds.get_data_parquet_async(query, title=title)
         except Exception as e:
             self.failed_request.append({"request":req, "error":repr(e)})
-            return f"  Fail to deliver {req['Sample']} | {req['dataset']} | {req['tree']}"
+            return f"  Fail to deliver {req['Sample']} | {req['tree']} | {req['dataset']}"
         
         # Update Outfile paths dictionary - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)
@@ -75,7 +76,7 @@ class DataBinderDataset:
                 elif self._outputformat == "root":
                     outfile = Path(target_path, Path(file).name).with_suffix('.root')
                     self.parquet_to_root(req['tree'], file, outfile)
-            return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is delivered"
+            return f"  {req['Sample']} | {req['tree']} | {req['dataset']}  is delivered"
         else: # hmm - target directory already there
             servicex_files = {Path(file).stem for file in files}
             local_files = {Path(file).stem for file in list(target_path.glob("*"))}
@@ -89,10 +90,10 @@ class DataBinderDataset:
                         elif self._outputformat == "root":
                             outfile = Path(target_path, Path(file).name).with_suffix('.root')
                             self.parquet_to_root(req['tree'], file, outfile)
-                    return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is delivered"
+                    return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
 
             if servicex_files == local_files: # one RucioDID for this sample and files are already there
-                return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is already delivered"
+                return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is already delivered"
             else:
                 # copy files in servicex but not in local
                 files_not_in_local = servicex_files.difference(local_files)
@@ -101,7 +102,7 @@ class DataBinderDataset:
                         copy(Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".parquet"))
                     elif self._outputformat == "root":
                         self.parquet_to_root(req['tree'], Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".root"))
-                return f"  {req['Sample']} | {req['dataset']} | {req['tree']} is delivered"
+                return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
 
 
     async def get_data(self, overall_progress_only):
@@ -113,7 +114,6 @@ class DataBinderDataset:
         tasks = []
 
         for req in self._servicex_requests:
-            log.debug(f"   {req['Sample']} | {req['dataset']} | {req['tree']}")
             tasks.append(self.deliver_and_copy(req))
         
         # await asyncio.gather(*tasks)
@@ -135,6 +135,7 @@ class DataBinderDataset:
 
         if overall_progress_only: pbar.close()
 
+        self.add_local_output_paths_dict()
         self.output_handler.write_output_paths_dict(self.out_paths_dict)
 
         return self.out_paths_dict
