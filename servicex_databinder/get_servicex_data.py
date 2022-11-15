@@ -102,13 +102,16 @@ class DataBinderDataset:
                     return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is already delivered"
                 else:
                     # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)                    
-                    for file in files_not_in_local:
-                        if self._outputformat == "parquet":
-                            copy(Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".parquet"))
-                        elif self._outputformat == "root":
-                            self.parquet_to_root(req['tree'], Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".root"))
-                    return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
+                    files_not_in_local = servicex_files.difference(local_files)
+                    if files_not_in_local:
+                        for file in files_not_in_local:
+                            if self._outputformat == "parquet":
+                                copy(Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".parquet"))
+                            elif self._outputformat == "root":
+                                self.parquet_to_root(req['tree'], Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".root"))
+                        return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
+                    else:
+                        return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is already delivered"
 
         elif 'xaod' in self._backend:    
             if not target_path.exists(): # easy - target directory doesn't exist
@@ -125,10 +128,12 @@ class DataBinderDataset:
                 else:
                     # copy files in servicex but not in local
                     files_not_in_local = servicex_files.difference(local_files)
-                    # print(files_not_in_local)
-                    for file in files_not_in_local:
-                        copy(Path(Path(files[0]).parent, file), Path(target_path, file))
-                    return f"  {req['Sample']} | {req['dataset']} is delivered"
+                    if files_not_in_local:
+                        for file in files_not_in_local:
+                            copy(Path(Path(files[0]).parent, file), Path(target_path, file))
+                        return f"  {req['Sample']} | {req['dataset']} is delivered"
+                    else:
+                        return f"  {req['Sample']} | {req['dataset']} is already delivered"
 
 
     async def get_data(self, overall_progress_only):
