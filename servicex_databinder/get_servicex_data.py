@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from servicex import ServiceXDataset, utils
+from servicex import ServiceXDataset, utils, servicex_config
 from aiohttp import ClientSession
 import asyncio
 from shutil import copy
@@ -32,7 +32,10 @@ class DataBinderDataset:
         self.ignoreCache = False
         if 'IgnoreServiceXCache' in self._config['General'].keys():
             self.ignoreCache = self._config['General']['IgnoreServiceXCache']
-
+        self.failed_request = []        
+        self.endpoint, _ = servicex_config.ServiceXConfigAdaptor(). \
+                        get_servicex_adaptor_config \
+                        (self._config['General']['ServiceXBackendName'])
 
     async def deliver_and_copy(self, req):
         target_path = Path(self.output_path, req['Sample'], req['tree'])
@@ -42,18 +45,22 @@ class DataBinderDataset:
             callback_factory = None
         else:
             callback_factory = utils._run_default_wrapper
-        
-        async with ClientSession(timeout=3600) as session:
-            sx_ds = ServiceXDataset(dataset=req['dataset'], 
-                                    backend_name=self._config['General']['ServiceXBackendName'],
-                                    status_callback_factory = callback_factory,
-                                    session_generator=session,
-                                    ignore_cache=self.ignoreCache
-                    )
-            query = req['query']
-            
-            title = f"{req['Sample']} - {req['tree']}"
-            files = await sx_ds.get_data_parquet_async(query, title=title)
+
+        try:
+            async with ClientSession(timeout=3600) as session:
+                sx_ds = ServiceXDataset(dataset=req['dataset'], 
+                                        backend_name=self._config['General']['ServiceXBackendName'],
+                                        status_callback_factory = callback_factory,
+                                        session_generator=session,
+                                        ignore_cache=self.ignoreCache
+                        )
+                query = req['query']
+                
+                title = f"{req['Sample']} - {req['tree']}"
+                files = await sx_ds.get_data_parquet_async(query, title=title)
+        except Exception as e:
+            self.failed_request.append({"request":req, "error":repr(e)})
+            return f"  Fail to deliver {req['Sample']} | {req['dataset']} | {req['tree']}"
         
         # Update Outfile paths dictionary - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)

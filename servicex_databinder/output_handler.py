@@ -44,16 +44,6 @@ class OutputHandler:
             self.output_path = Path('ServiceXData').absolute()
             self.output_path.mkdir(parents=True, exist_ok=True)
 
-    # def get_outpath(self):
-    #     if 'OutputDirectory' in self._config['General'].keys():
-    #         self.output_path = Path(self._config['General']['OutputDirectory']).absolute()
-    #         self.output_path.mkdir(parents=True, exist_ok=True)
-    #         return self.output_path
-    #     else:
-    #         self.output_path = Path('ServiceXData').absolute()
-    #         self.output_path.mkdir(parents=True, exist_ok=True)
-    #         return self.output_path
-
 
     def parquet_to_root(self, tree_name, pq_file, root_file):
         if pq.read_metadata(pq_file).num_rows == 0:

@@ -31,4 +31,8 @@ class DataBinder:
         x = Thread(target=OutputHandler(self._config).clean_up_files_not_in_requests, args=(out_paths_dict,))
         x.start()
 
-        return out_paths_dict
+        if len(self._sx_db.failed_request):
+            log.warning(f"{len(self._sx_db.failed_request)} failed delivery request(s)")
+            log.warning(f"More details - {self._sx_db.endpoint}")
+
+        return out_paths_dict, self._sx_db.failed_request
