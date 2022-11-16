@@ -65,9 +65,9 @@ class DataBinderDataset:
         except Exception as e:
             self.failed_request.append({"request":req, "error":repr(e)})
             if 'uproot' in self._backend:
-                return f"  Fail to deliver {req['Sample']} | {req['tree']} | {req['dataset']}"
+                return f"  Fail to deliver {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]}"
             elif 'xaod' in self._backend:
-                return f"  Fail to deliver {req['Sample']} | {req['dataset']}"
+                return f"  Fail to deliver {req['Sample']} | {str(req['dataset'])[:100]}"
         
         # Update Outfile paths dictionary - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)
@@ -83,7 +83,7 @@ class DataBinderDataset:
                     elif self._outputformat == "root":
                         outfile = Path(target_path, Path(file).name).with_suffix('.root')
                         self.parquet_to_root(req['tree'], file, outfile)
-                return f"  {req['Sample']} | {req['tree']} | {req['dataset']}  is delivered"
+                return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]}  is delivered"
             else: # hmm - target directory already there
                 servicex_files = {Path(file).stem for file in files}
                 local_files = {Path(file).stem for file in list(target_path.glob("*"))}
@@ -96,10 +96,10 @@ class DataBinderDataset:
                             elif self._outputformat == "root":
                                 outfile = Path(target_path, Path(file).name).with_suffix('.root')
                                 self.parquet_to_root(req['tree'], file, outfile)
-                        return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
+                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
 
                 if servicex_files == local_files: # one RucioDID for this sample and files are already there
-                    return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is already delivered"
+                    return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
                 else:
                     # copy files in servicex but not in local
                     files_not_in_local = servicex_files.difference(local_files)
@@ -109,9 +109,9 @@ class DataBinderDataset:
                                 copy(Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".parquet"))
                             elif self._outputformat == "root":
                                 self.parquet_to_root(req['tree'], Path(Path(files[0]).parent, file+".parquet"), Path(target_path, file+".root"))
-                        return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is delivered"
+                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
                     else:
-                        return f"  {req['Sample']} | {req['tree']} | {req['dataset']} is already delivered"
+                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
 
         elif 'xaod' in self._backend:    
             if not target_path.exists(): # easy - target directory doesn't exist
@@ -119,21 +119,21 @@ class DataBinderDataset:
                 for file in files:
                     outfile = Path(target_path, Path(file).name)
                     copy(file, outfile)
-                return f"  {req['Sample']} | {req['dataset']}  is delivered"
+                return f"  {req['Sample']} | {str(req['dataset'])[:100]}  is delivered"
             else: # hmm - target directory already there
                 servicex_files = {Path(file).name for file in files}
                 local_files = {Path(file).name for file in list(target_path.glob("*"))}
                 if servicex_files == local_files: # one RucioDID for this sample and files are already there
-                    return f"  {req['Sample']} | {req['dataset']} is already delivered"
+                    return f"  {req['Sample']} | {str(req['dataset'])[:100]} is already delivered"
                 else:
                     # copy files in servicex but not in local
                     files_not_in_local = servicex_files.difference(local_files)
                     if files_not_in_local:
                         for file in files_not_in_local:
                             copy(Path(Path(files[0]).parent, file), Path(target_path, file))
-                        return f"  {req['Sample']} | {req['dataset']} is delivered"
+                        return f"  {req['Sample']} | {str(req['dataset'])[:100]} is delivered"
                     else:
-                        return f"  {req['Sample']} | {req['dataset']} is already delivered"
+                        return f"  {req['Sample']} | {str(req['dataset'])[:100]} is already delivered"
 
 
     async def get_data(self, overall_progress_only):
