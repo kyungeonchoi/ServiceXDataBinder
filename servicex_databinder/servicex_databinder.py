@@ -1,4 +1,4 @@
-from typing import Union, Dict
+from typing import Union, Dict, Any
 from pathlib import Path
 import time
 import asyncio
@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 class DataBinder:
     """ Manage and categorize numerous ServiceX data from a configuration file"""
 
-    def __init__(self, config: Union[str, Path]):
+    def __init__(self, config: Union[str, Path, Dict[str, Any]]):
         self._config = _load_config(config)
         self._requests = ServiceXRequest(self._config).get_requests()
         self._sx_db = DataBinderDataset(self._config, self._requests)

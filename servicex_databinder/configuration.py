@@ -12,10 +12,10 @@ def _load_config(input_config: Union[str, pathlib.Path, Dict[str, Any]]) -> Dict
         Dict[str, Any]: configuration
     """
     
-    if isinstance(input_config, Dict):
+    if isinstance(input_config, dict):
         _replace_definition_in_sample_block(input_config)
-        _validate_config(config)
-        return config
+        _validate_config(input_config)
+        return input_config
     else:
         file_path = pathlib.Path(input_config)
         log.info(f"Loading DataBinder config file: {file_path}")
