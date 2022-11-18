@@ -1,5 +1,5 @@
 General:
-  ServiceXBackendName: uproot_atlasopendata
+  ServiceXBackendName: uproot
   OutputDirectory: ServiceXData_atlasopendata
   OutputFormat: parquet
   WriteOutputDict: out_atlasopendata

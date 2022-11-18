@@ -3,7 +3,6 @@ General:
   OutputDirectory: ServiceXData_xaod
   OutputFormat: root
   WriteOutputDict: out_xaod
-  IgnoreServiceXCache: False
   
 Sample:
   - Name: Zee
