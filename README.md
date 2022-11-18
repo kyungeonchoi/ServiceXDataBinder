@@ -10,6 +10,9 @@
 
 The package is particularly useful when accessing multiple remote data via ServiceX, e.g. full-scale analysis or extracting input data for machine learning.
 
+Brief introduction of ServiceX and walk-though of various DataBinder features can be found 
+in this [Jupyter notebook](https://nbviewer.org/github/kyungeonchoi/irishep_topical_ServiceXDataBinder/blob/main/16Nov2022_choi.ipynb).
+
 <!-- [`ServiceX`](https://github.com/ssl-hep/ServiceX) is a scalable HEP event data extraction, transformation and delivery system. 
 
 ['ServiceX Client library'](https://github.com/ssl-hep/ServiceX_frontend) provides  --> 
