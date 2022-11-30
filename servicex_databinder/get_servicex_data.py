@@ -22,6 +22,9 @@ class DataBinderDataset:
         self._servicex_requests = servicex_requests
         self._backend = self._config.get('General')['ServiceXBackendName'].lower()
         self._outputformat = self._config.get('General')['OutputFormat'].lower()
+        self.transformerImage = None
+        if 'TransformerImage' in self._config['General'].keys():
+            self.transformerImage = self._config['General']['TransformerImage']
 
         self.output_handler = OutputHandler(config)
         self.output_path = self.output_handler.output_path
@@ -56,6 +59,7 @@ class DataBinderDataset:
             async with ClientSession(timeout=3600) as session:
                 sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                         backend_name=self._config['General']['ServiceXBackendName'],
+                                        image=self.transformerImage,
                                         status_callback_factory = callback_factory,
                                         session_generator=session,
                                         ignore_cache=self.ignoreCache
