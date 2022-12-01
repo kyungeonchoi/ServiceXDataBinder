@@ -19,6 +19,7 @@ class OutputHandler:
             self._backend = "uproot"
         elif "xaod" in config['General']['ServiceXBackendName'].lower():
             self._backend = "xaod"
+        self._outputformat = self._config.get('General')['OutputFormat'].lower()
 
         """Prepare output path dictionary"""        
         out_paths = {}    
@@ -26,7 +27,7 @@ class OutputHandler:
         [samples.append(sample['Name']) for sample in config['Sample'] if sample['Name'] not in samples]
         for sample in samples:
             out_paths[sample] = {}
-        if self._backend == "uproot":
+        if self._outputformat == "parquet":
             for sample in config['Sample']:
                 for tree in sample['Tree'].split(','):
                     out_paths[sample['Name']][tree.strip()] = []
@@ -56,22 +57,17 @@ class OutputHandler:
 
     
     def update_output_paths_dict(self, req, files, format:str = "parquet"):
-        if self._backend == "uproot":
+        if self._outputformat == "parquet":
             # Outfile paths dictionary - add files based on the returned file list from ServiceX
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             paths_in_output_dict = self.out_paths_dict[req['Sample']][req['tree']]
-            if format == "parquet":
-                new_files = [str(Path(target_path, Path(file).name)) for file in files]
-            elif format == "root":
-                new_files = [str(Path(target_path, Path(file).name).with_suffix('.root')) for file in files]
-
+            new_files = [str(Path(target_path, Path(file).name)) for file in files]
             if paths_in_output_dict:
                 output_dict = list(set(paths_in_output_dict + new_files))
             else:
                 output_dict = new_files
-
             self.out_paths_dict[req['Sample']][req['tree']] = output_dict
-        elif self._backend == "xaod":
+        elif self._outputformat == "root":
             target_path = Path(self.output_path, req['Sample'])
             paths_in_output_dict = self.out_paths_dict[req['Sample']]
             new_files = [str(Path(target_path, Path(file).name)) for file in files]
@@ -85,13 +81,13 @@ class OutputHandler:
     def add_local_output_paths_dict(self):
         local_samples = [sample for sample in self._config.get('Sample') if 'LocalPath' in sample.keys()]
         for sample in local_samples:
-            if self._backend == "uproot":
+            if self._outputformat == "parquet":
                 for tree, fpath in zip(sample['Tree'].split(','), sample['LocalPath'].split(',')):
                     tree = tree.strip()
                     fpath = fpath.strip()
                     self.out_paths_dict[sample['Name']][tree] = [str(Path(f)) for f in Path(fpath).glob("*")]
                     log.info(f"  {sample['Name']} | {tree} | {fpath} is from local path")
-            elif self._backend == "xaod":
+            elif self._outputformat == "root":
                 for fpath in sample['LocalPath'].split(','):
                     fpath = fpath.strip()
                     self.out_paths_dict[sample['Name']] = [str(Path(f)) for f in Path(fpath).glob("*")]
@@ -121,15 +117,27 @@ class OutputHandler:
                 if not sample in samples_in_requests:
                     rmtree(Path(self.output_path, sample))
                 else:
-                    # for tree in out_paths_dict[sample].keys():
-                    for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
-                        if tree in out_paths_dict[sample].keys():
-                            files_local = set(Path(self.output_path, sample, tree).glob("*"))
-                            files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
-                            for tbd in files_local.difference(files_request):
-                                Path.unlink(tbd)
-                        else:
-                            rmtree(Path(self.output_path, sample, tree))
+                    if self._outputformat == "parquet":
+                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
+                            if tree in out_paths_dict[sample].keys():
+                                files_local = set(Path(self.output_path, sample, tree).glob("*"))
+                                files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
+                                for tbd in files_local.difference(files_request):
+                                    Path.unlink(tbd)
+                            else:
+                                rmtree(Path(self.output_path, sample, tree))
+                        # delete files if output format was root before
+                        for fi in [fi.name for fi in Path(self.output_path, sample).iterdir() if fi.is_file()]:
+                            Path.unlink(Path(self.output_path, sample, fi))
+                    elif self._outputformat == "root":
+                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
+                            rmtree(Path(self.output_path, sample, tree))                            
+                        files_local = set(Path(self.output_path, sample).glob("*"))
+                        files_request = set([Path(item) for item in out_paths_dict[sample]])
+                        for tbd in files_local.difference(files_request):
+                            Path.unlink(tbd)
+                        
+
         elif self._backend == "xaod":
             for sample in samples_local:
                 if not sample in samples_in_requests:
