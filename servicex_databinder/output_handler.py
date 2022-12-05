@@ -2,7 +2,7 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict
 import time
-from shutil import rmtree
+from shutil import rmtree, copy
 
 import pyarrow.parquet as pq
 import awkward as ak
@@ -42,6 +42,9 @@ class OutputHandler:
             self.output_path.mkdir(parents=True, exist_ok=True)
 
 
+    ##################################
+    ### parquet to ROOT conversion ###
+    ##################################
     def parquet_to_root(self, tree_name, pq_file, root_file):
         """Write ROOT ntuple from parquet file"""
         if pq.read_metadata(pq_file).num_rows == 0:
@@ -55,7 +58,81 @@ class OutputHandler:
             outfile[tree_name] = tree_dict
             outfile.close()
 
+
+    #################################
+    ### Copy, update and clean up ###
+    #################################
+    def copy_files(self, req, files):
+        if (self._backend, self._outputformat) == ('uproot', 'root'):
+            target_path = Path(self.output_path, req['Sample'])
+            if not target_path.exists():
+                target_path.mkdir(parents=True, exist_ok=True)
+                for file in files:
+                        outfile = Path(target_path, Path(file).name)
+                        copy(file, outfile)
+                return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
+            else: # target directory exists
+                servicex_files = {Path(file).name for file in files}
+                local_files = {Path(file).name for file in list(target_path.glob("*"))}
+                if servicex_files == local_files: # one RucioDID for this sample and files are already there
+                    return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
+                else:
+                    # copy files in servicex but not in local
+                    files_not_in_local = servicex_files.difference(local_files)
+                    if files_not_in_local:
+                        for file in files_not_in_local:
+                            copy(Path(Path(files[0]).parent, file), Path(target_path, file))
+                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
+                    else:
+                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
+
+
+    def clean_up_files_not_in_requests(self, out_paths_dict):
+
+        samples_in_requests = out_paths_dict.keys()
+        samples_local = [sa.name for sa in self.output_path.iterdir() if sa.is_dir()]
+
+        if self._backend == "uproot":
+            for sample in samples_local:
+                if not sample in samples_in_requests:
+                    rmtree(Path(self.output_path, sample))
+                else:
+                    if self._outputformat == "parquet":
+                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
+                            if tree in out_paths_dict[sample].keys():
+                                files_local = set(Path(self.output_path, sample, tree).glob("*"))
+                                files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
+                                for tbd in files_local.difference(files_request):
+                                    Path.unlink(tbd)
+                            else:
+                                rmtree(Path(self.output_path, sample, tree))
+                        # delete files if output format was root before
+                        for fi in [fi.name for fi in Path(self.output_path, sample).iterdir() if fi.is_file()]:
+                            Path.unlink(Path(self.output_path, sample, fi))
+                    elif self._outputformat == "root":
+                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
+                            rmtree(Path(self.output_path, sample, tree))                            
+                        files_local = set(Path(self.output_path, sample).glob("*"))
+                        files_request = set([Path(item) for item in out_paths_dict[sample]])
+                        for tbd in files_local.difference(files_request):
+                            Path.unlink(tbd)
+                        
+        elif self._backend == "xaod":
+            for sample in samples_local:
+                if not sample in samples_in_requests:
+                    rmtree(Path(self.output_path, sample))
+                else:
+                    files_local = set(Path(self.output_path, sample).glob("*"))
+                    files_request = set([Path(item) for item in out_paths_dict[sample]])
+                    for tbd in files_local.difference(files_request):
+                        Path.unlink(tbd)
+
+        return
+
     
+    ########################################
+    ### Dictionary for output file paths ###
+    ########################################
     def update_output_paths_dict(self, req, files, format:str = "parquet"):
         if self._outputformat == "parquet":
             # Outfile paths dictionary - add files based on the returned file list from ServiceX
@@ -105,47 +182,3 @@ class OutputHandler:
         else:
             for yl in list(Path(self.output_path).glob("*yml")):
                 Path.unlink(yl)
-
-
-    def clean_up_files_not_in_requests(self, out_paths_dict):
-
-        samples_in_requests = out_paths_dict.keys()
-        samples_local = [sa.name for sa in self.output_path.iterdir() if sa.is_dir()]
-
-        if self._backend == "uproot":
-            for sample in samples_local:
-                if not sample in samples_in_requests:
-                    rmtree(Path(self.output_path, sample))
-                else:
-                    if self._outputformat == "parquet":
-                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
-                            if tree in out_paths_dict[sample].keys():
-                                files_local = set(Path(self.output_path, sample, tree).glob("*"))
-                                files_request = set([Path(item) for item in out_paths_dict[sample][tree]])
-                                for tbd in files_local.difference(files_request):
-                                    Path.unlink(tbd)
-                            else:
-                                rmtree(Path(self.output_path, sample, tree))
-                        # delete files if output format was root before
-                        for fi in [fi.name for fi in Path(self.output_path, sample).iterdir() if fi.is_file()]:
-                            Path.unlink(Path(self.output_path, sample, fi))
-                    elif self._outputformat == "root":
-                        for tree in [tr.name for tr in Path(self.output_path, sample).iterdir() if tr.is_dir()]:
-                            rmtree(Path(self.output_path, sample, tree))                            
-                        files_local = set(Path(self.output_path, sample).glob("*"))
-                        files_request = set([Path(item) for item in out_paths_dict[sample]])
-                        for tbd in files_local.difference(files_request):
-                            Path.unlink(tbd)
-                        
-
-        elif self._backend == "xaod":
-            for sample in samples_local:
-                if not sample in samples_in_requests:
-                    rmtree(Path(self.output_path, sample))
-                else:
-                    files_local = set(Path(self.output_path, sample).glob("*"))
-                    files_request = set([Path(item) for item in out_paths_dict[sample]])
-                    for tbd in files_local.difference(files_request):
-                        Path.unlink(tbd)
-
-        return
