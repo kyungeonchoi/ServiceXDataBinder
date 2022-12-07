@@ -40,7 +40,7 @@ class DataBinderDataset:
         self.endpoint, _ = servicex_config.ServiceXConfigAdaptor(). \
                         get_servicex_adaptor_config \
                         (self._config['General']['ServiceXBackendName'])
-
+        self._semaphore = asyncio.Semaphore(value=50)
 
     async def deliver_and_copy(self, req): 
         if 'uproot' in self._backend:
@@ -56,16 +56,17 @@ class DataBinderDataset:
             callback_factory = utils._run_default_wrapper
 
         try:
-            async with ClientSession(timeout=3600) as session:
-                sx_ds = ServiceXDataset(dataset=req['dataset'], 
-                                        backend_name=self._config['General']['ServiceXBackendName'],
-                                        image=self.transformerImage,
-                                        status_callback_factory = callback_factory,
-                                        session_generator=session,
-                                        ignore_cache=self.ignoreCache
-                        )
-                query = req['query']
-                files = await sx_ds.get_data_parquet_async(query, title=title)
+            async with self._semaphore:
+                async with ClientSession(timeout=3600) as session:
+                    sx_ds = ServiceXDataset(dataset=req['dataset'], 
+                                            backend_name=self._config['General']['ServiceXBackendName'],
+                                            image=self.transformerImage,
+                                            status_callback_factory = callback_factory,
+                                            session_generator=session,
+                                            ignore_cache=self.ignoreCache
+                            )
+                    query = req['query']
+                    files = await sx_ds.get_data_parquet_async(query, title=title)
         except Exception as e:
             self.failed_request.append({"request":req, "error":repr(e)})
             if 'uproot' in self._backend:
