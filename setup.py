@@ -29,7 +29,7 @@ setuptools.setup(name="servicex_databinder",
                  author_email="kyungeonchoi@utexas.edu",
                  url="https://github.com/kyungeonchoi/ServiceXDataBinder",
                  license="BSD 3-clause",
-                 python_requires='>=3.7',
+                 python_requires='>=3.8',
                  install_requires=[
                     "servicex>=2.5",
                     "tcut-to-qastle>=0.7",                    
@@ -37,7 +37,8 @@ setuptools.setup(name="servicex_databinder",
                     "tqdm>=4.60.0",
                     "pyarrow>=3.0.0",
                     "backoff>=1.11.1",
-                    "func_adl_servicex>=1.1"
+                    "func_adl_servicex>=1.1",
+                    "aioshutil>=1.2"
                     ],
                  classifiers=[
                     "Development Status :: 3 - Alpha",
