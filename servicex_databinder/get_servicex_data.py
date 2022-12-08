@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 from servicex import ServiceXDataset, utils, servicex_config
 from aiohttp import ClientSession
 import asyncio
-# from shutil import copy
+
 from tqdm.asyncio import tqdm
 
 from .output_handler import OutputHandler
@@ -77,7 +77,7 @@ class DataBinderDataset:
 
         # Copy
         try:
-            return self.output_handler.copy_files(req, files)
+            return await self.output_handler.copy_files(req, files)
         except Exception as e:
             self.failed_request.append({"request":req, "error":repr(e)})
             return message_fail

@@ -2,7 +2,8 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict
 import time
-from shutil import rmtree, copy
+from shutil import rmtree
+from aioshutil import copy
 
 import pyarrow.parquet as pq
 import awkward as ak
@@ -62,14 +63,15 @@ class OutputHandler:
     #################################
     ### Copy, update and clean up ###
     #################################
-    def copy_files(self, req, files):
+    
+    async def copy_files(self, req, files):
         if (self._backend, self._outputformat) == ('uproot', 'root'):
             target_path = Path(self.output_path, req['Sample'])
             if not target_path.exists():
                 target_path.mkdir(parents=True, exist_ok=True)
                 for file in files:
-                        outfile = Path(target_path, Path(file).name)
-                        copy(file, outfile)
+                    outfile = Path(target_path, Path(file).name)
+                    await copy(file, outfile)
                 return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
             else: # target directory exists
                 servicex_files = {Path(file).name for file in files}
@@ -81,7 +83,7 @@ class OutputHandler:
                     files_not_in_local = servicex_files.difference(local_files)
                     if files_not_in_local:
                         for file in files_not_in_local:
-                            copy(Path(Path(files[0]).parent, file), Path(target_path, file))
+                            await copy(Path(Path(files[0]).parent, file), Path(target_path, file))
                         return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
                     else:
                         return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
