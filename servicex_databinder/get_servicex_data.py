@@ -57,11 +57,15 @@ class DataBinderDataset:
         else:
             callback_factory = utils._run_default_wrapper
 
+        transformer_image = self.transformerImage
+        if req['transformerImage']:
+            transformer_image = req['transformerImage']
+
         try:
             async with ClientSession(timeout=3600) as session:
                 sx_ds = ServiceXDataset(dataset=req['dataset'], 
                                         backend_name=self._backend_name,
-                                        image=self.transformerImage,
+                                        image=transformer_image,
                                         status_callback_factory = callback_factory,
                                         session_generator=session,
                                         ignore_cache=self.ignoreCache

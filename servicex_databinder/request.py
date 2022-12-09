@@ -36,11 +36,17 @@ class ServiceXRequest():
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")            
 
+            if 'TransformerImage' in sample.keys():
+                transformer_image = sample['TransformerImage']
+            else:
+                transformer_image = None
+
             for tree in trees:
                 for did in dids:
                     requests_sample.append(
                         {
                         'Sample': sample['Name'],
+                        'transformerImage': transformer_image,
                         'dataset': did.strip(),
                         'tree': tree.strip(),
                         'query': self._build_query(sample, tree.strip())
