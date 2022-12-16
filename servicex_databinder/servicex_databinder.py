@@ -26,8 +26,6 @@ class DataBinder:
 
         out_paths_dict = asyncio.run(self._sx_db.get_data(overall_progress_only))
 
-        # OutputHandler(self._config).clean_up_files_not_in_requests(out_paths_dict)
-
         x = Thread(target=OutputHandler(self._config).clean_up_files_not_in_requests, args=(out_paths_dict,))
         x.start()
 

@@ -76,10 +76,10 @@ class DataBinderDataset:
             self.failed_request.append({"request":req, "error":repr(e)})
             return message_fail
         
-        # Update Outfile paths dictionary - add files based on the returned file list from ServiceX
+        ### Update Outfile paths dictionary - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)
 
-        # Copy
+        ### Copy
         try:
             return await self.output_handler.copy_files(req, files)
         except Exception as e:
