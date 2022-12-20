@@ -1,7 +1,8 @@
 import yaml
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 import time
+from filecmp import cmp
 from shutil import rmtree
 from aioshutil import copy
 
@@ -66,7 +67,7 @@ class OutputHandler:
     ### Copy, update and clean up ###
     #################################
     
-    async def copy_files(self, req, files):
+    async def copy_files(self, req, files: List[Path]):
         if (self._backend, self._outputformat) == ('uproot', 'root'):
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             if not target_path.exists():
@@ -78,17 +79,22 @@ class OutputHandler:
             else: # target directory exists
                 servicex_files = {Path(file).name for file in files}
                 local_files = {Path(file).name for file in list(target_path.glob("*"))}
-                if servicex_files == local_files: # one RucioDID for this sample and files are already there
-                    return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
-                else:
-                    # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)
-                    if files_not_in_local:
-                        for file in files_not_in_local:
-                            await copy(Path(Path(files[0]).parent, file), Path(target_path, file))
-                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"
-                    else:
-                        return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is already delivered"
+                servicex_file_path = Path(files[0]).parent
+                
+                # copy files in servicex but not in local
+                files_not_in_local = servicex_files.difference(local_files)
+                if files_not_in_local:
+                    for file in files_not_in_local:
+                        await copy(Path(servicex_file_path, file), Path(target_path, file))
+
+                # copy updated files                
+                files_intersect = servicex_files.intersection(local_files)
+                if files_intersect:
+                    for file in files_intersect:
+                        if not cmp(Path(servicex_file_path, file), Path(target_path, file)):
+                            await copy(Path(servicex_file_path, file), Path(target_path, file))
+                        
+                return f"  {req['Sample']} | {req['tree']} | {str(req['dataset'])[:100]} is delivered"                
 
 
     def clean_up_files_not_in_requests(self, out_paths_dict):
