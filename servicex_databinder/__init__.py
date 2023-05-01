@@ -1,6 +1,6 @@
 import logging
 
-from .servicex_databinder import DataBinder
+from .servicex_databinder import DataBinder # NOQA
 
 __version__ = '0.3.0'
 
