@@ -16,15 +16,15 @@ class ServiceXRequest():
             get('General')['ServiceXBackendName'].lower()
 
     def get_requests(self) -> List:
-        log.debug(f"ServiceX backend:\
-                  {self._config.get('General')['ServiceXBackendName']}")
+        log.debug(f"ServiceX backend: "
+                  f"{self._config.get('General')['ServiceXBackendName']}")
         list_requests = []
         for sample in self._config.get('Sample'):
             list_requests.append(self._build_request(sample))
         # flatten nested lists
         flist_requests = [request for x in list_requests for request in x]
-        log.debug(f"number of total ServiceX requests in the config: \
-                  {len(flist_requests)}")
+        log.debug("number of total ServiceX requests in the config: "
+                  f"{len(flist_requests)}")
         log.debug(f"ServiceX requests in the config: {flist_requests}")
         return flist_requests
 
@@ -35,8 +35,8 @@ class ServiceXRequest():
             dids = sample['RucioDID'].split(',')
             if 'uproot' in self._backend:
                 trees = sample['Tree'].split(',')
-                log.debug(f"  Sample {sample['Name']} has \
-                          {len(dids)} DID(s) and {len(trees)} Tree(s)")
+                log.debug(f"  Sample {sample['Name']} has "
+                          f"{len(dids)} DID(s) and {len(trees)} Tree(s)")
             else:
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
@@ -56,13 +56,13 @@ class ServiceXRequest():
                                for file in sample['XRootDFiles'].split(",")]
             if 'uproot' in self._backend:
                 trees = sample['Tree'].split(',')
-                log.debug(f"  Sample {sample['Name']} has \
-                          {len(xrootd_filelist)} file(s) and \
-                          {len(trees)} Tree(s)")
+                log.debug(f"  Sample {sample['Name']} has "
+                          f"{len(xrootd_filelist)} file(s) and "
+                          f"{len(trees)} Tree(s)")
             else:
                 trees = ['dummy']
-                log.debug(f"  Sample {sample['Name']} has \
-                          {len(xrootd_filelist)} file(s)")
+                log.debug(f"  Sample {sample['Name']} has "
+                          f"{len(xrootd_filelist)} file(s)")
             for tree in trees:
                 requests_sample.append(
                     {
@@ -94,20 +94,20 @@ class ServiceXRequest():
                         return query
                     except Exception:
                         log.exception(
-                            f"Exception occured for the query \
-                            of Sample {sample['Name']}"
+                            "Exception occured for the query "
+                            f"of Sample {sample['Name']}"
                             )
             elif 'FuncADL' in sample:
-                query = f"EventDataset('ServiceXDatasetSource', \
-                    '{tree}')." + sample['FuncADL']
+                query = ("EventDataset('ServiceXDatasetSource', "
+                         f"'{tree}')." + sample['FuncADL'])
                 try:
                     qastle_query = qastle.python_ast_to_text_ast(
                         qastle.insert_linq_nodes(ast.parse(query)))
                     return qastle_query
                 except Exception:
                     log.exception(
-                        f"Exception occured for the query \
-                        of Sample {sample['Name']}"
+                        "Exception occured for the query "
+                        f"of Sample {sample['Name']}"
                         )
         elif 'xaod' in self._backend:
             query = "ServiceXSourceXAOD('')." + sample['FuncADL']
@@ -117,6 +117,6 @@ class ServiceXRequest():
                 return qastle_query
             except Exception:
                 log.exception(
-                    f"Exception occured for the query \
-                    of Sample {sample['Name']}"
+                    "Exception occured for the query "
+                    f"of Sample {sample['Name']}"
                     )

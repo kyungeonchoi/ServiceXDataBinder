@@ -22,8 +22,8 @@ class DataBinder:
         self._requests = ServiceXRequest(self._config).get_requests()
         self._sx_db = DataBinderDataset(self._config, self._requests)
 
-        log.info(f"  {len(self._config.get('Sample'))} Samples \
-                 and {len(self._requests)} ServiceX requests")
+        log.info(f"  {len(self._config.get('Sample'))} Samples"
+                 f" and {len(self._requests)} ServiceX requests")
 
     def deliver(self, overall_progress_only: bool = False) -> Dict:
 
@@ -38,8 +38,8 @@ class DataBinder:
         x.start()
 
         if len(self._sx_db.failed_request):
-            log.warning(f"{len(self._sx_db.failed_request)} \
-                        failed delivery request(s)")
+            log.warning(f"{len(self._sx_db.failed_request)} "
+                        "failed delivery request(s)")
             log.warning("get_failed_requests() for detail of failed requests")
 
         return out_paths_dict

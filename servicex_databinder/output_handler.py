@@ -111,29 +111,30 @@ class OutputHandler:
                     fpath = fpath.strip()
                     self.out_paths_dict[sample['Name']][tree] \
                         = [str(Path(f)) for f in Path(fpath).glob("*")]
-                    log.info(f"  {sample['Name']} \
-                             | {tree} | {fpath} is from local path")
+                    log.info(f"  {sample['Name']} "
+                             f"| {tree} | {fpath} is from local path")
             elif self._backend == "xaod":
                 for fpath in sample['LocalPath'].split(','):
                     fpath = fpath.strip()
                     self.out_paths_dict[sample['Name']] = \
                         [str(Path(f)) for f in Path(fpath).glob("*")]
-                    log.info(f"  {sample['Name']} \
-                             | {fpath} is from local path")
+                    log.info(f"  {sample['Name']} "
+                             f"| {fpath} is from local path")
 
     def write_output_paths_dict(self, out_paths_dict):
         """
         Write yaml of output dict
         """
         if 'WriteOutputDict' in self._config['General'].keys():
-            file_out_paths = f"{self.output_path}/ \
-                {self._config['General']['WriteOutputDict']}.yml"
+            file_out_paths = \
+                (f"{self.output_path}/"
+                 f"{self._config['General']['WriteOutputDict']}.yml")
             with open(file_out_paths, 'w') as f:
-                log.debug(f"write a yaml file containg delivered file paths: \
-                          {f.name}")
+                log.debug("write a yaml file containg delivered file paths: "
+                          f"{f.name}")
                 yaml.dump(out_paths_dict, f, default_flow_style=False)
-            log.info(f"Wrote a yaml file containing delivered file paths: \
-                     {file_out_paths}")
+            log.info("Wrote a yaml file containing delivered file paths: "
+                     f"{file_out_paths}")
         else:
             for yl in list(Path(self.output_path).glob("*yml")):
                 Path.unlink(yl)
