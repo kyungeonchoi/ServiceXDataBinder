@@ -7,6 +7,8 @@ import pyarrow.parquet as pq
 import awkward as ak
 import uproot
 
+# from .configuration import get_backend_per_sample
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -15,10 +17,6 @@ class OutputHandler:
 
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
-        if "uproot" in config['General']['ServiceXBackendName'].lower():
-            self._backend = "uproot"
-        elif "xaod" in config['General']['ServiceXBackendName'].lower():
-            self._backend = "xaod"
 
         """
         Prepare output path dictionary
@@ -26,13 +24,14 @@ class OutputHandler:
         out_paths = {}
         samples = []
         [samples.append(sample['Name'])
-         for sample in config['Sample'] if sample['Name'] not in samples]
+            for sample in config['Sample'] if sample['Name'] not in samples]
         for sample in samples:
             out_paths[sample] = {}
-        if self._backend == "uproot":
-            for sample in config['Sample']:
+        for sample in config['Sample']:
+            if sample['Transformer'] == "uproot":
                 for tree in sample['Tree'].split(','):
                     out_paths[sample['Name']][tree.strip()] = []
+
         self.out_paths_dict = out_paths
 
         """
@@ -67,7 +66,7 @@ class OutputHandler:
         Outfile paths dictionary
         Add files based on the returned file list from ServiceX
         """
-        if self._backend == "uproot":
+        if req['codegen'] == "uproot":
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             paths_in_output_dict = \
                 self.out_paths_dict[req['Sample']][req['tree']]
@@ -87,7 +86,7 @@ class OutputHandler:
                 output_dict = new_files
 
             self.out_paths_dict[req['Sample']][req['tree']] = output_dict
-        elif self._backend == "xaod":
+        elif req['codegen'] == "atlasr21":
             target_path = Path(self.output_path, req['Sample'])
             paths_in_output_dict = self.out_paths_dict[req['Sample']]
             new_files = [
@@ -104,22 +103,22 @@ class OutputHandler:
         local_samples = [sample for sample in self._config.get('Sample')
                          if 'LocalPath' in sample.keys()]
         for sample in local_samples:
-            if self._backend == "uproot":
-                for tree, fpath in zip(sample['Tree'].split(','),
-                                       sample['LocalPath'].split(',')):
-                    tree = tree.strip()
-                    fpath = fpath.strip()
-                    self.out_paths_dict[sample['Name']][tree] \
-                        = [str(Path(f)) for f in Path(fpath).glob("*")]
-                    log.info(f"  {sample['Name']} "
-                             f"| {tree} | {fpath} is from local path")
-            elif self._backend == "xaod":
-                for fpath in sample['LocalPath'].split(','):
-                    fpath = fpath.strip()
-                    self.out_paths_dict[sample['Name']] = \
-                        [str(Path(f)) for f in Path(fpath).glob("*")]
-                    log.info(f"  {sample['Name']} "
-                             f"| {fpath} is from local path")
+            # if self._backend == "uproot":
+            #     for tree, fpath in zip(sample['Tree'].split(','),
+            #                            sample['LocalPath'].split(',')):
+            #         tree = tree.strip()
+            #         fpath = fpath.strip()
+            #         self.out_paths_dict[sample['Name']][tree] \
+            #             = [str(Path(f)) for f in Path(fpath).glob("*")]
+            #         log.info(f"  {sample['Name']} "
+            #                  f"| {tree} | {fpath} is from local path")
+            # elif self._backend == "xaod":
+            for fpath in sample['LocalPath'].split(','):
+                fpath = fpath.strip()
+                self.out_paths_dict[sample['Name']] = \
+                    [str(Path(f)) for f in Path(fpath).glob("*")]
+                log.info(f"  {sample['Name']} "
+                         f"| {fpath} is from local path")
 
     def write_output_paths_dict(self, out_paths_dict):
         """
@@ -133,7 +132,7 @@ class OutputHandler:
                 log.debug("write a yaml file containg delivered file paths: "
                           f"{f.name}")
                 yaml.dump(out_paths_dict, f, default_flow_style=False)
-            log.info("Wrote a yaml file containing delivered file paths: "
+            log.info("YAML file containing delivered file paths: "
                      f"{file_out_paths}")
         else:
             for yl in list(Path(self.output_path).glob("*yml")):
@@ -144,31 +143,27 @@ class OutputHandler:
         samples_in_requests = list(out_paths_dict.keys())
         samples_local = [sa.name for sa in self.output_path.iterdir()
                          if sa.is_dir()]
-
-        if self._backend == "uproot":
-            for sample in samples_local:
-                if not (sample in samples_in_requests):
-                    rmtree(Path(self.output_path, sample))
-                else:
-                    # for tree in out_paths_dict[sample].keys():
-                    for tree in [tr.name for tr in
-                                 Path(self.output_path, sample).iterdir()
-                                 if tr.is_dir()]:
-                        if tree in out_paths_dict[sample].keys():
-                            files_local = set(Path(self.output_path, sample,
-                                                   tree).glob("*"))
-                            files_request = set(
-                                [Path(item)
-                                 for item in out_paths_dict[sample][tree]]
-                                )
-                            for tbd in files_local.difference(files_request):
-                                Path.unlink(tbd)
-                        else:
-                            rmtree(Path(self.output_path, sample, tree))
-        elif self._backend == "xaod":
-            for sample in samples_local:
-                if not (sample in samples_in_requests):
-                    rmtree(Path(self.output_path, sample))
+        for sample in samples_local:
+            if not (sample in samples_in_requests):
+                rmtree(Path(self.output_path, sample))
+            else:
+                if list(Path(self.output_path, sample).iterdir())[0].is_dir():
+                    for tree in out_paths_dict[sample].keys():
+                        for tree in [tr.name for tr in
+                                     Path(self.output_path, sample).iterdir()
+                                     if tr.is_dir()]:
+                            if tree in out_paths_dict[sample].keys():
+                                files_local = set(Path(self.output_path,
+                                                       sample, tree).glob("*"))
+                                files_request = set(
+                                    [Path(item)
+                                     for item in out_paths_dict[sample][tree]]
+                                    )
+                                for tbd in \
+                                        files_local.difference(files_request):
+                                    Path.unlink(tbd)
+                            else:
+                                rmtree(Path(self.output_path, sample, tree))
                 else:
                     files_local = set(Path(self.output_path, sample).glob("*"))
                     files_request = set(

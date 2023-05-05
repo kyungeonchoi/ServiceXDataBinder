@@ -20,7 +20,7 @@ def LoadConfig(input_config:
     if isinstance(input_config, dict):
         _replace_definition_in_sample_block(input_config)
         _validate_config(input_config)
-        return input_config
+        return _update_backend_per_sample(input_config)
     else:
         file_path = pathlib.Path(input_config)
         log.info(f"Loading DataBinder config file: {file_path}")
@@ -28,7 +28,7 @@ def LoadConfig(input_config:
             config = yaml.safe_load(file_path.read_text())
             _replace_definition_in_sample_block(config)
             _validate_config(config)
-            return config
+            return _update_backend_per_sample(config)
         except Exception:
             raise FileNotFoundError(
                 f"Exception occured while reading config file: {file_path}"
@@ -187,3 +187,41 @@ def get_backend_per_sample(config: Dict[str, Any]) -> Dict:
             backend_per_sample[sample['Name']] = pair
 
     return backend_per_sample
+
+
+def _update_backend_per_sample(config: Dict[str, Any]) -> Dict:
+    """ from servicex.yaml file """
+    backend_type = servicex_config.ServiceXConfigAdaptor()\
+        .get_backend_info(config['General']['ServiceXName'], "type")
+    if backend_type == "xaod":
+        pair = ("xaod", "atlasr21")
+    elif backend_type == "uproot":
+        pair = ("uproot", "uproot")
+
+    """ from General block """
+    if 'Transformer' in config['General'].keys():
+        if config['General']['Transformer'] == "atlasr21":
+            pair = ("xaod", "atlasr21")
+        elif config['General']['Transformer'] == "uproot":
+            pair = ("uproot", "uproot")
+        elif config['General']['Transformer'] == "python":
+            pair = ("uproot", "python")
+
+    """ from Sample block """
+    for (idx, sample) in zip(range(len(config['Sample'])), config['Sample']):
+        if 'Transformer' in sample.keys():
+            if sample['Transformer'] == "atlasr21":
+                # backend_per_sample[sample['Name']] = ("xaod", "atlasr21")
+                config['Sample'][idx]['Type'] = "xaod"
+            elif sample['Transformer'] == "uproot":
+                # backend_per_sample[sample['Name']] = ("uproot", "uproot")
+                config['Sample'][idx]['Type'] = "uproot"
+            elif sample['Transformer'] == "python":
+                # backend_per_sample[sample['Name']] = ("uproot", "python")
+                config['Sample'][idx]['Type'] = "uproot"
+        else:
+            # backend_per_sample[sample['Name']] = pair
+            config['Sample'][idx]['Type'] = pair[0]
+            config['Sample'][idx]['Transformer'] = pair[1]
+
+    return config

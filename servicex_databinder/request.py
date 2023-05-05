@@ -6,7 +6,7 @@ import logging
 from func_adl_servicex import ServiceXSourceXAOD # NOQA
 from servicex import ServiceXDataset # NOQA
 
-from .configuration import get_backend_per_sample
+# from .configuration import get_backend_per_sample
 
 log = logging.getLogger(__name__)
 
@@ -17,9 +17,9 @@ class ServiceXRequest():
     """
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
-        self._backend = self._config.\
-            get('General')['Transformer'].lower()
-        self._backend_per_sample = get_backend_per_sample(config)
+        # self._backend = self._config.\
+        #     get('General')['Transformer'].lower()
+        # self._backend_per_sample = get_backend_per_sample(config)
 
     def get_requests(self) -> List:
         log.debug(f"ServiceX backend: "
@@ -42,12 +42,13 @@ class ServiceXRequest():
 
         if 'RucioDID' in sample.keys():
             dids = sample['RucioDID'].split(',')
-            # if 'uproot' in self._backend:
-            if self._backend_per_sample[sample['Name']][0] == "uproot":
+            # if self._backend_per_sample[sample['Name']][0] == "uproot":
+            if sample['Type'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(dids)} DID(s) and {len(trees)} Tree(s)")
-            elif self._backend_per_sample[sample['Name']][0] == "xaod":
+            # elif self._backend_per_sample[sample['Name']][0] == "xaod":
+            if sample['Type'] == "xaod":
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
 
@@ -57,10 +58,8 @@ class ServiceXRequest():
                         {
                             'Sample': sample['Name'],
                             'dataset': did.strip(),
-                            'type':
-                                self._backend_per_sample[sample['Name']][0],
-                            'codegen':
-                                self._backend_per_sample[sample['Name']][1],
+                            'type': sample['Type'],
+                            'codegen': sample['Transformer'],
                             'tree': tree.strip(),
                             'query': self._build_query(sample, tree.strip())
                         }
@@ -68,12 +67,14 @@ class ServiceXRequest():
         elif 'XRootDFiles' in sample.keys():
             xrootd_filelist = [file.strip()
                                for file in sample['XRootDFiles'].split(",")]
-            if self._backend_per_sample[sample['Name']][0] == "uproot":
+            # if self._backend_per_sample[sample['Name']][0] == "uproot":
+            if sample['Type'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s) and "
                           f"{len(trees)} Tree(s)")
-            elif self._backend_per_sample[sample['Name']][0] == "xaod":
+            # elif self._backend_per_sample[sample['Name']][0] == "xaod":
+            if sample['Type'] == "xaod":
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s)")
@@ -82,10 +83,8 @@ class ServiceXRequest():
                     {
                         'Sample': sample['Name'],
                         'dataset': xrootd_filelist,
-                        'type':
-                            self._backend_per_sample[sample['Name']][0],
-                        'codegen':
-                            self._backend_per_sample[sample['Name']][1],
+                        'type': sample['Type'],
+                        'codegen': sample['Transformer'],
                         'tree': tree.strip(),
                         'query': self._build_query(sample, tree)
                     }
@@ -98,8 +97,7 @@ class ServiceXRequest():
         Option Columns for TCut syntax
         Option FuncADL for func-adl syntax
         """
-        # if 'uproot' in self._backend:
-        if self._backend_per_sample[sample['Name']][1] == "uproot":
+        if sample['Transformer'] == "uproot":
             if 'Columns' in sample:
                 if ('Filter' not in sample) or (sample['Filter'] is None):
                     sample['Filter'] = ''
@@ -128,7 +126,7 @@ class ServiceXRequest():
                         "Exception occured for the query "
                         f"of Sample {sample['Name']}"
                         )
-        elif self._backend_per_sample[sample['Name']][1] == "atlasr21":
+        elif sample['Transformer'] == "atlasr21":
             query = "ServiceXSourceXAOD(ServiceXDataset('', backend_name='" \
                     + "servicex-release-prod" + "'))." + sample['FuncADL']
             # query = "ServiceXSourceXAOD('')." + sample['FuncADL']
