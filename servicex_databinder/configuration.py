@@ -73,7 +73,7 @@ def _validate_config(config: Dict[str, Any]) -> bool:
 
     available_keys = [
         'General', 'ServiceXName', 'OutputDirectory', 'Transformer',
-        'OutputFormat', 'ZipROOTColumns', 'WriteOutputDict', 'Name',
+        'OutputFormat', 'WriteOutputDict', 'Name',
         'IgnoreLocalCache', 'Sample', 'RucioDID', 'XRootDFiles', 'Tree',
         'Filter', 'Columns', 'FuncADL', 'LocalPath', 'Definition',
         'ServiceXBackendName', 'IgnoreServiceXCache'
@@ -211,16 +211,12 @@ def _update_backend_per_sample(config: Dict[str, Any]) -> Dict:
     for (idx, sample) in zip(range(len(config['Sample'])), config['Sample']):
         if 'Transformer' in sample.keys():
             if sample['Transformer'] == "atlasr21":
-                # backend_per_sample[sample['Name']] = ("xaod", "atlasr21")
                 config['Sample'][idx]['Type'] = "xaod"
             elif sample['Transformer'] == "uproot":
-                # backend_per_sample[sample['Name']] = ("uproot", "uproot")
                 config['Sample'][idx]['Type'] = "uproot"
             elif sample['Transformer'] == "python":
-                # backend_per_sample[sample['Name']] = ("uproot", "python")
                 config['Sample'][idx]['Type'] = "uproot"
         else:
-            # backend_per_sample[sample['Name']] = pair
             config['Sample'][idx]['Type'] = pair[0]
             config['Sample'][idx]['Transformer'] = pair[1]
 

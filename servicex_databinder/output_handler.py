@@ -7,8 +7,6 @@ import pyarrow.parquet as pq
 import awkward as ak
 import uproot
 
-# from .configuration import get_backend_per_sample
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -103,22 +101,22 @@ class OutputHandler:
         local_samples = [sample for sample in self._config.get('Sample')
                          if 'LocalPath' in sample.keys()]
         for sample in local_samples:
-            # if self._backend == "uproot":
-            #     for tree, fpath in zip(sample['Tree'].split(','),
-            #                            sample['LocalPath'].split(',')):
-            #         tree = tree.strip()
-            #         fpath = fpath.strip()
-            #         self.out_paths_dict[sample['Name']][tree] \
-            #             = [str(Path(f)) for f in Path(fpath).glob("*")]
-            #         log.info(f"  {sample['Name']} "
-            #                  f"| {tree} | {fpath} is from local path")
-            # elif self._backend == "xaod":
-            for fpath in sample['LocalPath'].split(','):
-                fpath = fpath.strip()
-                self.out_paths_dict[sample['Name']] = \
-                    [str(Path(f)) for f in Path(fpath).glob("*")]
-                log.info(f"  {sample['Name']} "
-                         f"| {fpath} is from local path")
+            if 'Tree' in sample.keys():
+                for tree, fpath in zip(sample['Tree'].split(','),
+                                       sample['LocalPath'].split(',')):
+                    tree = tree.strip()
+                    fpath = fpath.strip()
+                    self.out_paths_dict[sample['Name']][tree] \
+                        = [str(Path(f)) for f in Path(fpath).glob("*")]
+                    log.info(f"  {sample['Name']} "
+                             f"| {tree} | {fpath} is from local path")
+            else:
+                for fpath in sample['LocalPath'].split(','):
+                    fpath = fpath.strip()
+                    self.out_paths_dict[sample['Name']] = \
+                        [str(Path(f)) for f in Path(fpath).glob("*")]
+                    log.info(f"  {sample['Name']} "
+                             f"| {fpath} is from local path")
 
     def write_output_paths_dict(self, out_paths_dict):
         """
@@ -129,7 +127,7 @@ class OutputHandler:
                 (f"{self.output_path}/"
                  f"{self._config['General']['WriteOutputDict']}.yml")
             with open(file_out_paths, 'w') as f:
-                log.debug("write a yaml file containg delivered file paths: "
+                log.debug("YAML file containing delivered file paths: "
                           f"{f.name}")
                 yaml.dump(out_paths_dict, f, default_flow_style=False)
             log.info("YAML file containing delivered file paths: "

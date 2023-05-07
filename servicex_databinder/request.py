@@ -6,8 +6,6 @@ import logging
 from func_adl_servicex import ServiceXSourceXAOD # NOQA
 from servicex import ServiceXDataset # NOQA
 
-# from .configuration import get_backend_per_sample
-
 log = logging.getLogger(__name__)
 
 
@@ -17,9 +15,6 @@ class ServiceXRequest():
     """
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
-        # self._backend = self._config.\
-        #     get('General')['Transformer'].lower()
-        # self._backend_per_sample = get_backend_per_sample(config)
 
     def get_requests(self) -> List:
         log.debug(f"ServiceX backend: "
@@ -42,13 +37,11 @@ class ServiceXRequest():
 
         if 'RucioDID' in sample.keys():
             dids = sample['RucioDID'].split(',')
-            # if self._backend_per_sample[sample['Name']][0] == "uproot":
             if sample['Type'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(dids)} DID(s) and {len(trees)} Tree(s)")
-            # elif self._backend_per_sample[sample['Name']][0] == "xaod":
-            if sample['Type'] == "xaod":
+            elif sample['Type'] == "xaod":
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
 
@@ -67,14 +60,12 @@ class ServiceXRequest():
         elif 'XRootDFiles' in sample.keys():
             xrootd_filelist = [file.strip()
                                for file in sample['XRootDFiles'].split(",")]
-            # if self._backend_per_sample[sample['Name']][0] == "uproot":
             if sample['Type'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s) and "
                           f"{len(trees)} Tree(s)")
-            # elif self._backend_per_sample[sample['Name']][0] == "xaod":
-            if sample['Type'] == "xaod":
+            elif sample['Type'] == "xaod":
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s)")

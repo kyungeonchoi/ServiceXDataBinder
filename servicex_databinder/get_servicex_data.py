@@ -22,7 +22,6 @@ class DataBinderDataset:
     def __init__(self, config: Dict[str, Any], servicex_requests: List):
         self._config = config
         self._servicex_requests = servicex_requests
-        # self._backend_per_sample = get_backend_per_sample(config)
         self._outputformat \
             = self._config.get('General')['OutputFormat'].lower()
         self.transformerImage = None
@@ -226,6 +225,8 @@ class DataBinderDataset:
             pbar.close()
 
         self.add_local_output_paths_dict()
+
+        log.info(f"Delivered at {self.output_path}")
 
         self.output_handler.write_output_paths_dict(self.out_paths_dict)
 
