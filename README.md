@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.3.0 </p>
+<p align="right"> Release v0.4.0 </p>
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
@@ -19,7 +19,7 @@ in this [Jupyter notebook](https://nbviewer.org/github/kyungeonchoi/irishep_topi
 
 ## Prerequisite
 - [Access to a ServiceX instance](https://servicex.readthedocs.io/en/latest/user/getting-started/)
-- Python 3.6+
+- Python 3.7+
 
 ## Installation
 ```shell
@@ -76,7 +76,6 @@ The followings are available options:
 | `ServiceXBackendName`* | ServiceX backend name in your `servicex.yaml` file <br> (name MUST contain either `uproot` or `xaod` to distinguish the type of transformer) | `String` |
 | `OutputDirectory`* | Path to the directory for ServiceX delivered files | `String` |
 | `OutputFormat`* | Output file format of ServiceX delivered data (`parquet` or `root` for `uproot` / `root` for `xaod`) | `String` |
-| `ZipROOTColumns` | Zip columns that share prefix to generate one counter branch (see detail at [uproot readthedoc](https://uproot.readthedocs.io/en/latest/basic.html#writing-ttrees-to-a-file)) | `Boolean` |
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 <p align="right"> *Mandatory options</p>

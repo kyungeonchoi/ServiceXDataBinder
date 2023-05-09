@@ -1,10 +1,11 @@
 General:
-  # ServiceXName: servicex-uc-af
-  ServiceXName: servicex-release-prod
+  ServiceXName: servicex-uc-af
   OutputFormat: root
+  IgnoreServiceXCache: False
   
 Sample:
   - Name: ggH125_ZZ4lep
-    XRootDFiles: root://eospublic.cern.ch//eos/opendata/atlas/OutreachDatasets/2020-01-22/4lep/MC/mc_345060.ggH125_ZZ4lep.4lep.root
+    XRootDFiles: "root://eospublic.cern.ch//eos/opendata/atlas/OutreachDatasets\
+                  /2020-01-22/4lep/MC/mc_345060.ggH125_ZZ4lep.4lep.root"
     Tree: mini
     FuncADL: "Select(lambda event: {'lep_pt': event.lep_pt, 'lep_eta': event.lep_eta})"

@@ -146,49 +146,6 @@ def _validate_config(config: Dict[str, Any]) -> bool:
     return True
 
 
-def get_backend_per_sample(config: Dict[str, Any]) -> Dict:
-    """
-    Returns a dictionary - {sample: (backend_type, codegen)}
-    e.g. {"ttbar": ("uproot", "python")}
-    Expected combinations of backend_type, codegen:
-        ("xaod", "atlasr21")
-        ("uproot", "uproot")
-        ("uproot", "python")
-    """
-    backend_per_sample = {}
-
-    """ from servicex.yaml file """
-    backend_type = servicex_config.ServiceXConfigAdaptor()\
-        .get_backend_info(config['General']['ServiceXName'], "type")
-    if backend_type == "xaod":
-        pair = ("xaod", "atlasr21")
-    elif backend_type == "uproot":
-        pair = ("uproot", "uproot")
-
-    """ from General block """
-    if 'Transformer' in config['General'].keys():
-        if config['General']['Transformer'] == "atlasr21":
-            pair = ("xaod", "atlasr21")
-        elif config['General']['Transformer'] == "uproot":
-            pair = ("uproot", "uproot")
-        elif config['General']['Transformer'] == "python":
-            pair = ("uproot", "python")
-
-    """ from Sample block """
-    for sample in config['Sample']:
-        if 'Transformer' in sample.keys():
-            if sample['Transformer'] == "atlasr21":
-                backend_per_sample[sample['Name']] = ("xaod", "atlasr21")
-            elif sample['Transformer'] == "uproot":
-                backend_per_sample[sample['Name']] = ("uproot", "uproot")
-            elif sample['Transformer'] == "python":
-                backend_per_sample[sample['Name']] = ("uproot", "python")
-        else:
-            backend_per_sample[sample['Name']] = pair
-
-    return backend_per_sample
-
-
 def _update_backend_per_sample(config: Dict[str, Any]) -> Dict:
     """ from servicex.yaml file """
     backend_type = servicex_config.ServiceXConfigAdaptor()\

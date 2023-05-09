@@ -8,7 +8,6 @@ from shutil import copy
 from tqdm.asyncio import tqdm
 
 from servicex import ServiceXDataset, utils, servicex_config
-# from .configuration import get_backend_per_sample
 from .output_handler import OutputHandler
 
 import nest_asyncio
