@@ -26,7 +26,8 @@ class OutputHandler:
         for sample in samples:
             out_paths[sample] = {}
         for sample in config['Sample']:
-            if sample['Transformer'] == "uproot":
+            # if sample['Transformer'] == "uproot":
+            if 'Tree' in sample.keys():
                 for tree in sample['Tree'].split(','):
                     out_paths[sample['Name']][tree.strip()] = []
 

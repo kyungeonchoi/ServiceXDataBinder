@@ -92,19 +92,19 @@ class ServiceXRequest():
             if 'Columns' in sample:
                 if ('Filter' not in sample) or (sample['Filter'] is None):
                     sample['Filter'] = ''
-                else:
-                    try:
-                        query = tq.translate(
-                            tree,
-                            sample['Columns'],
-                            sample['Filter']
+                # else:
+                try:
+                    query = tq.translate(
+                        tree,
+                        sample['Columns'],
+                        sample['Filter']
+                    )
+                    return query
+                except Exception:
+                    log.exception(
+                        "Exception occured for the query "
+                        f"of Sample {sample['Name']}"
                         )
-                        return query
-                    except Exception:
-                        log.exception(
-                            "Exception occured for the query "
-                            f"of Sample {sample['Name']}"
-                            )
             elif 'FuncADL' in sample:
                 query = ("EventDataset('ServiceXDatasetSource', "
                          f"'{tree}')." + sample['FuncADL'])
