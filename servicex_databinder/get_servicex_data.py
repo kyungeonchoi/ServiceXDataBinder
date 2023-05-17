@@ -21,14 +21,9 @@ class DataBinderDataset:
     def __init__(self, config: Dict[str, Any], servicex_requests: List):
         self._config = config
         self._servicex_requests = servicex_requests
-        self._backend \
-            = self._config.get('General')['ServiceXBackendName'].lower()
         self._outputformat \
             = self._config.get('General')['OutputFormat'].lower()
         self.transformerImage = None
-# if 'TransformerImage' in self._config['General'].keys():
-#     self.transformerImage = self._config['General']['TransformerImage']
-
         self.output_handler = OutputHandler(config)
         self.output_path = self.output_handler.output_path
         self.out_paths_dict = self.output_handler.out_paths_dict
@@ -42,16 +37,17 @@ class DataBinderDataset:
         if 'IgnoreServiceXCache' in self._config['General'].keys():
             self.ignoreCache = self._config['General']['IgnoreServiceXCache']
         self.failed_request = []
-        self.endpoint, _ = servicex_config.ServiceXConfigAdaptor().\
-            get_servicex_adaptor_config(
-                self._config['General']['ServiceXBackendName']
-            )
+        self.endpoint = servicex_config.ServiceXConfigAdaptor()\
+            .get_backend_info(
+                self._config['General']['ServiceXName'],
+                "endpoint"
+                )
 
     async def deliver_and_copy(self, req):
-        if 'uproot' in self._backend:
+        if req['codegen'] == "uproot":
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             title = f"{req['Sample']} - {req['tree']}"
-        elif 'xaod' in self._backend:
+        elif req['codegen'] == "atlasr21":
             target_path = Path(self.output_path, req['Sample'])
             title = f"{req['Sample']}"
 
@@ -64,8 +60,10 @@ class DataBinderDataset:
             async with ClientSession(timeout=3600) as session:
                 sx_ds = ServiceXDataset(
                     dataset=req['dataset'],
-                    backend_name=self._config['General']['ServiceXBackendName'],
-                    image=self.transformerImage,
+                    backend_name=self._config['General']['ServiceXName'],
+                    backend_type=req['type'],
+                    codegen=req['codegen'],
+                    # image=self.transformerImage,
                     status_callback_factory=callback_factory,
                     session_generator=session,
                     ignore_cache=self.ignoreCache
@@ -74,12 +72,12 @@ class DataBinderDataset:
                 files = await sx_ds.get_data_parquet_async(query, title=title)
         except Exception as e:
             self.failed_request.append({"request": req, "error": repr(e)})
-            if 'uproot' in self._backend:
+            if req['codegen'] == "uproot":
                 return ("  Fail to deliver "
                         f"{req['Sample']} | "
                         f"{req['tree']} | "
                         f"{str(req['dataset'])[:100]}")
-            elif 'xaod' in self._backend:
+            elif req['codegen'] == "atlasr21":
                 return ("  Fail to deliver "
                         f"{req['Sample']} | "
                         f"{str(req['dataset'])[:100]}")
@@ -89,7 +87,7 @@ class DataBinderDataset:
         self.update_out_paths_dict(req, files, self._outputformat)
 
         # Copy
-        if 'uproot' in self._backend:
+        if req['codegen'] == "uproot":
             if not target_path.exists():
                 # easy - target directory doesn't exist
                 target_path.mkdir(parents=True, exist_ok=True)
@@ -133,7 +131,7 @@ class DataBinderDataset:
                 if servicex_files == local_files:
                     return (f"  {req['Sample']} | "
                             f"{req['tree']} | "
-                            f"{str(req['dataset'])[:100]}"
+                            f"{str(req['dataset'])[:100]} "
                             "is already delivered")
                 else:
                     # copy files in servicex but not in local
@@ -147,7 +145,8 @@ class DataBinderDataset:
                             elif self._outputformat == "root":
                                 self.parquet_to_root(
                                     req['tree'],
-                                    Path(Path(files[0]).parent, file+".parquet"),
+                                    Path(Path(files[0]).parent,
+                                         file+".parquet"),
                                     Path(target_path, file+".root"))
                         return (f"  {req['Sample']} | "
                                 f"{req['tree']} | "
@@ -159,7 +158,7 @@ class DataBinderDataset:
                                 f"{str(req['dataset'])[:100]} "
                                 "is already delivered")
 
-        elif 'xaod' in self._backend:
+        elif req['codegen'] == "atlasr21":
             # easy - target directory doesn't exist
             if not target_path.exists():
                 target_path.mkdir(parents=True, exist_ok=True)
@@ -225,6 +224,8 @@ class DataBinderDataset:
             pbar.close()
 
         self.add_local_output_paths_dict()
+
+        log.info(f"Delivered at {self.output_path}")
 
         self.output_handler.write_output_paths_dict(self.out_paths_dict)
 

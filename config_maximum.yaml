@@ -1,0 +1,39 @@
+General:
+  ServiceXName: servicex-uc-af
+  Transformer: uproot
+  OutputFormat: root
+  OutputDirectory: /Users/kchoi/data_for_MLstudy
+  WriteOutputDict: fileset_ml_study
+  IgnoreServiceXCache: False
+  
+Sample:  
+  - Name: Signal
+    RucioDID: user.kchoi:user.kchoi.signalA,
+              user.kchoi:user.kchoi.signalB,
+              user.kchoi:user.kchoi.signalC
+    Tree: nominal
+    FuncADL: DEF_ttH_nominal_query
+  - Name: Background1
+    XRootDFiles: DEF_ggH_input
+    Tree: mini
+    Filter: lep_n>2
+    Columns: lep_pt, lep_eta
+  - Name: Background2
+    Transformer: atlasr21
+    RucioDID: DEF_Zee_input
+    FuncADL: DEF_Zee_query
+  - Name: Background3
+    LocalPath: /Users/kchoi/Work/data/background3
+
+Definition:
+  DEF_ttH_nominal_query: "Where(lambda e: e.met_met>150e3). \
+              Select(lambda event: {'el_pt': event.el_pt, 'jet_e': event.jet_e, \
+              'jet_pt': event.jet_pt, 'met_met': event.met_met})"
+  DEF_ggH_input: "root://eospublic.cern.ch//eos/opendata/atlas/OutreachDatasets\
+                  /2020-01-22/4lep/MC/mc_345060.ggH125_ZZ4lep.4lep.root"
+  DEF_Zee_input: "mc15_13TeV:mc15_13TeV.361106.PowhegPythia8EvtGen_AZNLOCTEQ6L1_Zee.\
+                merge.DAOD_STDM3.e3601_s2576_s2132_r6630_r6264_p2363_tid05630052_00"
+  DEF_Zee_query: "SelectMany('lambda e: e.Jets(\"AntiKt4EMTopoJets\")'). \
+              Where('lambda j: (j.pt() / 1000) > 30'). \
+              Select('lambda j: j.pt() / 1000.0'). \
+              AsROOTTTree('junk.root', 'my_tree', [\"JetPt\"])"
