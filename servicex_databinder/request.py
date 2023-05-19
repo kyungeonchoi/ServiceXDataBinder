@@ -119,7 +119,8 @@ class ServiceXRequest():
                         )
         elif sample['Transformer'] == "atlasr21":
             query = "ServiceXSourceXAOD(ServiceXDataset('', backend_name='" \
-                    + "servicex-release-prod" + "'))." + sample['FuncADL']
+                + self._config.get('General')['ServiceXName'] + "'))." \
+                + sample['FuncADL']
             try:
                 o = eval(query)
                 qastle_query = qastle.python_ast_to_text_ast(o._q_ast)
