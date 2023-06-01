@@ -1,10 +1,10 @@
-from pathlib import Path
+# from pathlib import Path
 from typing import Any, Dict, List
 import logging
 
 from aiohttp import ClientSession
 import asyncio
-from shutil import copy
+# from shutil import copy
 from tqdm.asyncio import tqdm
 
 from servicex import ServiceXDataset, utils, servicex_config
@@ -31,7 +31,7 @@ class DataBinderDataset:
             = self.output_handler.update_output_paths_dict
         self.add_local_output_paths_dict \
             = self.output_handler.add_local_output_paths_dict
-        self.parquet_to_root = self.output_handler.parquet_to_root
+        # self.parquet_to_root = self.output_handler.parquet_to_root
 
         self.ignoreCache = False
         if 'IgnoreServiceXCache' in self._config['General'].keys():
@@ -45,10 +45,10 @@ class DataBinderDataset:
 
     async def deliver_and_copy(self, req):
         if req['codegen'] == "uproot":
-            target_path = Path(self.output_path, req['Sample'], req['tree'])
+            # target_path = Path(self.output_path, req['Sample'], req['tree'])
             title = f"{req['Sample']} - {req['tree']}"
         elif req['codegen'] == "atlasr21":
-            target_path = Path(self.output_path, req['Sample'])
+            # target_path = Path(self.output_path, req['Sample'])
             title = f"{req['Sample']}"
 
         if self._progresbar:
@@ -69,7 +69,16 @@ class DataBinderDataset:
                     ignore_cache=self.ignoreCache
                     )
                 query = req['query']
-                files = await sx_ds.get_data_parquet_async(query, title=title)
+                if self._outputformat == "parquet":
+                    files = await sx_ds.get_data_parquet_async(
+                        query,
+                        title=title
+                        )
+                elif self._outputformat == "root":
+                    files = await sx_ds.get_data_parquet_async(
+                        query,
+                        title=title
+                        )
         except Exception as e:
             self.failed_request.append({"request": req, "error": repr(e)})
             if req['codegen'] == "uproot":
@@ -86,113 +95,7 @@ class DataBinderDataset:
         # - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)
 
-        # Copy
-        if req['codegen'] == "uproot":
-            if not target_path.exists():
-                # easy - target directory doesn't exist
-                target_path.mkdir(parents=True, exist_ok=True)
-                for file in files:
-                    if self._outputformat == "parquet":
-                        outfile = Path(target_path, Path(file).name)
-                        copy(file, outfile)
-                    elif self._outputformat == "root":
-                        outfile = Path(
-                            target_path,
-                            Path(file).name
-                            ).with_suffix('.root')
-                        self.parquet_to_root(req['tree'], file, outfile)
-                return (f"  {req['Sample']} | "
-                        f"{req['tree']} | "
-                        f"{str(req['dataset'])[:100]} is delivered")
-            else:
-                # hmm - target directory already there
-                servicex_files = {Path(file).stem for file in files}
-                local_files = {
-                        Path(file).stem for file in list(target_path.glob("*"))
-                    }
-                if len(local_files):
-                    if Path(list(target_path.glob("*"))[0]).suffix.strip(".") \
-                            != self._outputformat:
-                        for file in files:
-                            if self._outputformat == "parquet":
-                                outfile = Path(target_path, Path(file).name)
-                                copy(file, outfile)
-                            elif self._outputformat == "root":
-                                outfile = Path(target_path, Path(file).name) \
-                                    .with_suffix('.root')
-                                self.parquet_to_root(
-                                        req['tree'], file, outfile
-                                    )
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]} is delivered")
-
-                # one RucioDID for this sample and files are already there
-                if servicex_files == local_files:
-                    return (f"  {req['Sample']} | "
-                            f"{req['tree']} | "
-                            f"{str(req['dataset'])[:100]} "
-                            "is already delivered")
-                else:
-                    # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)
-                    if files_not_in_local:
-                        for file in files_not_in_local:
-                            if self._outputformat == "parquet":
-                                copy(Path(Path(files[0]).parent,
-                                          file+".parquet"),
-                                     Path(target_path, file+".parquet"))
-                            elif self._outputformat == "root":
-                                self.parquet_to_root(
-                                    req['tree'],
-                                    Path(Path(files[0]).parent,
-                                         file+".parquet"),
-                                    Path(target_path, file+".root"))
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]}"
-                                "is delivered")
-                    else:
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]} "
-                                "is already delivered")
-
-        elif req['codegen'] == "atlasr21":
-            # easy - target directory doesn't exist
-            if not target_path.exists():
-                target_path.mkdir(parents=True, exist_ok=True)
-                for file in files:
-                    outfile = Path(target_path, Path(file).name)
-                    copy(file, outfile)
-                return (f"  {req['Sample']} | "
-                        f"{str(req['dataset'])[:100]} is delivered")
-            # hmm - target directory already there
-            else:
-                servicex_files = {Path(file).name for file in files}
-                local_files = {
-                    Path(file).name for file in list(target_path.glob("*"))}
-                # one RucioDID for this sample and files are already there
-                if servicex_files == local_files:
-                    return (f"  {req['Sample']} | "
-                            f"{str(req['dataset'])[:100]} "
-                            "is already delivered")
-                else:
-                    # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)
-                    if files_not_in_local:
-                        for file in files_not_in_local:
-                            copy(
-                                Path(Path(files[0]).parent, file),
-                                Path(target_path, file)
-                                )
-                        return (f"  {req['Sample']} | "
-                                f"{str(req['dataset'])[:100]}"
-                                "is delivered")
-                    else:
-                        return (f"  {req['Sample']} | "
-                                f"{str(req['dataset'])[:100]} "
-                                "is already delivered")
+        return self.output_handler.copy_to_target(req, files)
 
     async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
