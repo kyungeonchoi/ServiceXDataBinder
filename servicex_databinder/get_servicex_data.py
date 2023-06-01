@@ -1,10 +1,8 @@
-# from pathlib import Path
 from typing import Any, Dict, List
 import logging
 
 from aiohttp import ClientSession
 import asyncio
-# from shutil import copy
 from tqdm.asyncio import tqdm
 
 from servicex import ServiceXDataset, utils, servicex_config
@@ -45,10 +43,8 @@ class DataBinderDataset:
 
     async def deliver_and_copy(self, req):
         if req['codegen'] == "uproot":
-            # target_path = Path(self.output_path, req['Sample'], req['tree'])
             title = f"{req['Sample']} - {req['tree']}"
         elif req['codegen'] == "atlasr21":
-            # target_path = Path(self.output_path, req['Sample'])
             title = f"{req['Sample']}"
 
         if self._progresbar:
@@ -75,7 +71,7 @@ class DataBinderDataset:
                         title=title
                         )
                 elif self._outputformat == "root":
-                    files = await sx_ds.get_data_parquet_async(
+                    files = await sx_ds.get_data_rootfiles_async(
                         query,
                         title=title
                         )
@@ -94,8 +90,7 @@ class DataBinderDataset:
         # Update Outfile paths dictionary
         # - add files based on the returned file list from ServiceX
         self.update_out_paths_dict(req, files, self._outputformat)
-
-        return self.output_handler.copy_to_target(req, files)
+        self.output_handler.copy_to_target(req, files)
 
     async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
@@ -121,7 +116,7 @@ class DataBinderDataset:
                 pbar.set_description(value)
                 pbar.update()
             else:
-                log.info(value)
+                pass
 
         if overall_progress_only:
             pbar.close()

@@ -2,16 +2,20 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict
 from shutil import rmtree, copy
+# from aioshutil import copy
 
 import pyarrow.parquet as pq
 import awkward as ak
 import uproot
 
+# import nest_asyncio
+# nest_asyncio.apply()
+
 import logging
 log = logging.getLogger(__name__)
 
 
-class OutputHandler:
+class OutputHandler():
 
     def __init__(self, config: Dict[str, Any]) -> None:
         self._config = config
@@ -49,111 +53,39 @@ class OutputHandler:
     def copy_to_target(self, req, files):
         if req['codegen'] == "uproot":
             target_path = Path(self.output_path, req['Sample'], req['tree'])
-            if not target_path.exists():
-                # easy - target directory doesn't exist
-                target_path.mkdir(parents=True, exist_ok=True)
-                for file in files:
-                    if self._outputformat == "parquet":
-                        outfile = Path(target_path, Path(file).name)
-                        copy(file, outfile)
-                    elif self._outputformat == "root":
-                        outfile = Path(
-                            target_path,
-                            Path(file).name
-                            ).with_suffix('.root')
-                        self.parquet_to_root(req['tree'], file, outfile)
-                return (f"  {req['Sample']} | "
-                        f"{req['tree']} | "
-                        f"{str(req['dataset'])[:100]} is delivered")
-            else:
-                # hmm - target directory already there
-                servicex_files = {Path(file).stem for file in files}
-                local_files = {
-                        Path(file).stem for file in list(target_path.glob("*"))
-                    }
-                if len(local_files):
-                    if Path(list(target_path.glob("*"))[0]).suffix.strip(".") \
-                            != self._outputformat:
-                        for file in files:
-                            if self._outputformat == "parquet":
-                                outfile = Path(target_path, Path(file).name)
-                                copy(file, outfile)
-                            elif self._outputformat == "root":
-                                outfile = Path(target_path, Path(file).name) \
-                                    .with_suffix('.root')
-                                self.parquet_to_root(
-                                        req['tree'], file, outfile
-                                    )
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]} is delivered")
-
-                # one RucioDID for this sample and files are already there
-                if servicex_files == local_files:
-                    return (f"  {req['Sample']} | "
-                            f"{req['tree']} | "
-                            f"{str(req['dataset'])[:100]} "
-                            "is already delivered")
-                else:
-                    # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)
-                    if files_not_in_local:
-                        for file in files_not_in_local:
-                            if self._outputformat == "parquet":
-                                copy(Path(Path(files[0]).parent,
-                                          file+".parquet"),
-                                     Path(target_path, file+".parquet"))
-                            elif self._outputformat == "root":
-                                self.parquet_to_root(
-                                    req['tree'],
-                                    Path(Path(files[0]).parent,
-                                         file+".parquet"),
-                                    Path(target_path, file+".root"))
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]}"
-                                "is delivered")
-                    else:
-                        return (f"  {req['Sample']} | "
-                                f"{req['tree']} | "
-                                f"{str(req['dataset'])[:100]} "
-                                "is already delivered")
+            delivery_info = (f"  {req['Sample']} | "
+                             f"{req['tree']} | "
+                             f"{str(req['dataset'])[:100]}")
         elif req['codegen'] == "atlasr21":
             target_path = Path(self.output_path, req['Sample'])
-            # easy - target directory doesn't exist
-            if not target_path.exists():
-                target_path.mkdir(parents=True, exist_ok=True)
-                for file in files:
-                    outfile = Path(target_path, Path(file).name)
-                    copy(file, outfile)
-                return (f"  {req['Sample']} | "
-                        f"{str(req['dataset'])[:100]} is delivered")
-            # hmm - target directory already there
+            delivery_info = (f"  {req['Sample']} | "
+                             f"{str(req['dataset'])[:100]}")
+
+        if target_path.exists():
+            servicex_files = {Path(file).name for file in files}
+            local_files = {
+                Path(file).name for file in list(target_path.glob("*"))
+                }
+            servicex_data_path = Path(files[0]).parents[0]
+            # one RucioDID for this sample and files are already there
+            if servicex_files == local_files:
+                log.info(f"{delivery_info} is already delivered")
             else:
-                servicex_files = {Path(file).name for file in files}
-                local_files = {
-                    Path(file).name for file in list(target_path.glob("*"))}
-                # one RucioDID for this sample and files are already there
-                if servicex_files == local_files:
-                    return (f"  {req['Sample']} | "
-                            f"{str(req['dataset'])[:100]} "
-                            "is already delivered")
+                # copy files in servicex but not in local
+                files_not_in_local = servicex_files.difference(local_files)
+                if files_not_in_local:
+                    for file in files_not_in_local:
+                        copy(Path(servicex_data_path, file),
+                             Path(target_path, file))
+                    log.info(f"{delivery_info} is delivered")
                 else:
-                    # copy files in servicex but not in local
-                    files_not_in_local = servicex_files.difference(local_files)
-                    if files_not_in_local:
-                        for file in files_not_in_local:
-                            copy(
-                                Path(Path(files[0]).parent, file),
-                                Path(target_path, file)
-                                )
-                        return (f"  {req['Sample']} | "
-                                f"{str(req['dataset'])[:100]}"
-                                "is delivered")
-                    else:
-                        return (f"  {req['Sample']} | "
-                                f"{str(req['dataset'])[:100]} "
-                                "is already delivered")
+                    log.info(f"{delivery_info} is already delivered")
+        else:
+            target_path.mkdir(parents=True, exist_ok=True)
+            for file in files:
+                outfile = Path(target_path, Path(file).name)
+                copy(file, outfile)
+            log.info(f"{delivery_info} is delivered")
 
     def parquet_to_root(self, tree_name, pq_file, root_file):
         """
