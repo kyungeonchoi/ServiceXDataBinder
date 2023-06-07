@@ -29,8 +29,6 @@ class DataBinderDataset:
             = self.output_handler.update_output_paths_dict
         self.add_local_output_paths_dict \
             = self.output_handler.add_local_output_paths_dict
-        # self.parquet_to_root = self.output_handler.parquet_to_root
-
         self.ignoreCache = False
         if 'IgnoreServiceXCache' in self._config['General'].keys():
             self.ignoreCache = self._config['General']['IgnoreServiceXCache']
@@ -46,6 +44,25 @@ class DataBinderDataset:
             title = f"{req['Sample']} - {req['tree']}"
         elif req['codegen'] == "atlasr21":
             title = f"{req['Sample']}"
+
+        if self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "localpath":
+            delivery_setting = 1
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "localpath":
+            delivery_setting = 2
+        elif self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "localcache":
+            delivery_setting = 3
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "localcache":
+            delivery_setting = 4
+        elif self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "uri":
+            delivery_setting = 5
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "uri":
+            delivery_setting = 6
 
         if self._progresbar:
             callback_factory = None
@@ -65,13 +82,23 @@ class DataBinderDataset:
                     ignore_cache=self.ignoreCache
                     )
                 query = req['query']
-                if self._outputformat == "parquet":
+                if delivery_setting == 1 or delivery_setting == 3:
                     files = await sx_ds.get_data_parquet_async(
                         query,
                         title=title
                         )
-                elif self._outputformat == "root":
+                elif delivery_setting == 2 or delivery_setting == 4:
                     files = await sx_ds.get_data_rootfiles_async(
+                        query,
+                        title=title
+                        )
+                elif delivery_setting == 5:
+                    files = await sx_ds.get_data_parquet_uri_async(
+                        query,
+                        title=title
+                        )
+                elif delivery_setting == 6:
+                    files = await sx_ds.get_data_rootfiles_uri_async(
                         query,
                         title=title
                         )
@@ -88,9 +115,10 @@ class DataBinderDataset:
                         f"{str(req['dataset'])[:100]}")
 
         # Update Outfile paths dictionary
-        # - add files based on the returned file list from ServiceX
-        self.update_out_paths_dict(req, files, self._outputformat)
-        self.output_handler.copy_to_target(req, files)
+        self.update_out_paths_dict(req, files, delivery_setting)
+
+        if delivery_setting == 1 or delivery_setting == 2:
+            self.output_handler.copy_to_target(req, files)
 
     async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
