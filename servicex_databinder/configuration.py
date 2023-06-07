@@ -18,6 +18,7 @@ def LoadConfig(input_config:
     """
 
     if isinstance(input_config, dict):
+        _decorate_defaults(input_config)
         _replace_definition_in_sample_block(input_config)
         _validate_config(input_config)
         return _update_backend_per_sample(input_config)
@@ -26,6 +27,7 @@ def LoadConfig(input_config:
         log.info(f"Loading DataBinder config file: {file_path}")
         try:
             config = yaml.safe_load(file_path.read_text())
+            _decorate_defaults(config)
             _replace_definition_in_sample_block(config)
             _validate_config(config)
             return _update_backend_per_sample(config)
@@ -55,6 +57,48 @@ def _replace_definition_in_sample_block(config: Dict[str, Any]):
         return flag
 
 
+def _update_backend_per_sample(config: Dict[str, Any]) -> Dict:
+    """ from servicex.yaml file """
+    backend_type = servicex_config.ServiceXConfigAdaptor()\
+        .get_backend_info(config['General']['ServiceXName'], "type")
+    if backend_type == "xaod":
+        pair = ("xaod", "atlasr21")
+    elif backend_type == "uproot":
+        pair = ("uproot", "uproot")
+
+    """ from General block """
+    if 'Transformer' in config['General'].keys():
+        if config['General']['Transformer'] == "atlasr21":
+            pair = ("xaod", "atlasr21")
+        elif config['General']['Transformer'] == "uproot":
+            pair = ("uproot", "uproot")
+        elif config['General']['Transformer'] == "python":
+            pair = ("uproot", "python")
+
+    """ from Sample block """
+    for (idx, sample) in zip(range(len(config['Sample'])), config['Sample']):
+        if 'Transformer' in sample.keys():
+            if sample['Transformer'] == "atlasr21":
+                config['Sample'][idx]['Type'] = "xaod"
+            elif sample['Transformer'] == "uproot":
+                config['Sample'][idx]['Type'] = "uproot"
+            elif sample['Transformer'] == "python":
+                config['Sample'][idx]['Type'] = "uproot"
+        else:
+            config['Sample'][idx]['Type'] = pair[0]
+            config['Sample'][idx]['Transformer'] = pair[1]
+
+    return config
+
+
+def _decorate_defaults(config: Dict[str, Any]) -> Dict:
+    if 'Delivery' in config['General'].keys():
+        config['General']['Delivery'] = config['General']['Delivery'].lower()
+    else:
+        config['General']['Delivery'] = 'localpath'
+    return config
+
+
 def _validate_config(config: Dict[str, Any]) -> bool:
     """Returns True if the config file is validated,
     otherwise raises exceptions.
@@ -76,7 +120,8 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         'OutputFormat', 'WriteOutputDict', 'Name',
         'IgnoreLocalCache', 'Sample', 'RucioDID', 'XRootDFiles', 'Tree',
         'Filter', 'Columns', 'FuncADL', 'LocalPath', 'Definition',
-        'ServiceXBackendName', 'IgnoreServiceXCache'
+        'ServiceXBackendName', 'IgnoreServiceXCache',
+        'Delivery'
         ]
 
     if 'General' not in config.keys() and 'Sample' not in config.keys():
@@ -144,37 +189,3 @@ def _validate_config(config: Dict[str, Any]) -> bool:
 
     log.debug("config looks okay")
     return True
-
-
-def _update_backend_per_sample(config: Dict[str, Any]) -> Dict:
-    """ from servicex.yaml file """
-    backend_type = servicex_config.ServiceXConfigAdaptor()\
-        .get_backend_info(config['General']['ServiceXName'], "type")
-    if backend_type == "xaod":
-        pair = ("xaod", "atlasr21")
-    elif backend_type == "uproot":
-        pair = ("uproot", "uproot")
-
-    """ from General block """
-    if 'Transformer' in config['General'].keys():
-        if config['General']['Transformer'] == "atlasr21":
-            pair = ("xaod", "atlasr21")
-        elif config['General']['Transformer'] == "uproot":
-            pair = ("uproot", "uproot")
-        elif config['General']['Transformer'] == "python":
-            pair = ("uproot", "python")
-
-    """ from Sample block """
-    for (idx, sample) in zip(range(len(config['Sample'])), config['Sample']):
-        if 'Transformer' in sample.keys():
-            if sample['Transformer'] == "atlasr21":
-                config['Sample'][idx]['Type'] = "xaod"
-            elif sample['Transformer'] == "uproot":
-                config['Sample'][idx]['Type'] = "uproot"
-            elif sample['Transformer'] == "python":
-                config['Sample'][idx]['Type'] = "uproot"
-        else:
-            config['Sample'][idx]['Type'] = pair[0]
-            config['Sample'][idx]['Transformer'] = pair[1]
-
-    return config
