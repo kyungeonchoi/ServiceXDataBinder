@@ -1,6 +1,6 @@
 # ServiceX DataBinder
 
-<p align="right"> Release v0.4.1 </p>
+<p align="right"> Release v0.5.0 </p>
 
 [![PyPI version](https://badge.fury.io/py/servicex-databinder.svg)](https://badge.fury.io/py/servicex-databinder)
 
@@ -65,23 +65,26 @@ The followings are available options:
 
 <!-- `General` block: -->
 | Option for `General` block | Description       | DataType |
-|:--------:|:------:|:------|
+|:--------:|:------|:------|
 | `ServiceXName`* | ServiceX backend name in your `servicex.yaml` file <br>  | `String` |
-| `OutputDirectory` | Path to the directory for ServiceX delivered files | `String` |
 | `OutputFormat`* | Output file format of ServiceX delivered data (`parquet` or `root` for `uproot` / `root` for `xaod`) | `String` |
+| `Transformer` | Set transformer for all Samples. Overwrites the default transformer in the `servicex.yaml` file.  | `String`|
+| `Delivery` | Delivery option; `LocalPath` (default) or `LocalCache` or `ObjectStore` | `String` |
+| `OutputDirectory` | Path to a directory for ServiceX delivered files | `String` |
 | `WriteOutputDict` | Name of an ouput yaml file containing Python nested dictionary of output file paths (located in the `OutputDirectory`) | `String` |
 | `IgnoreServiceXCache` | Ignore the existing ServiceX cache and force to make ServiceX requests | `Boolean` |
 <p align="right"> *Mandatory options</p>
 
 | Option for `Sample` block | Description       |DataType |
-|:--------:|:------:|:------|
-| `Name`   | sample name defined by a user |`String` |
+|:--------:|:------|:------|
+| `Name`   | Sample name defined by a user |`String` |
+| `Transformer` | Transformer for the given sample | `String`|
 | `RucioDID` | Rucio Dataset Id (DID) for a given sample; <br> Can be multiple DIDs separated by comma |`String` |
 | `XRootDFiles` | XRootD files (e.g. `root://`) for a given sample; <br> Can be multiple files separated by comma |`String` |
 | `Tree` | Name of the input ROOT `TTree`; <br> Can be multiple `TTree`s separated by comma (`uproot` ONLY) |`String` |
 | `Filter` | Selection in the TCut syntax, e.g. `jet_pt > 10e3 && jet_eta < 2.0` (TCut ONLY) |`String` |
 | `Columns` | List of columns (or branches) to be delivered; multiple columns separately by comma (TCut ONLY) |`String` |
-| `FuncADL` | func-adl expression for a given sample |`String` |
+| `FuncADL` | Func-adl expression for a given sample |`String` |
 | `LocalPath` | File path directly from local path (NO ServiceX tranformation) | `String` |
 
  <!-- Options exclusively for TCut syntax (CANNOT combine with the option `FuncADL`) -->
