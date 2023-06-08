@@ -32,7 +32,7 @@ def LoadConfig(input_config:
             _validate_config(config)
             return _update_backend_per_sample(config)
         except Exception:
-            raise FileNotFoundError(
+            raise SyntaxError(
                 f"Exception occured while reading config file: {file_path}"
                 )
 
@@ -115,6 +115,7 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         bool: whether the validation was successful
     """
 
+    # Check Option names
     available_keys = [
         'General', 'ServiceXName', 'OutputDirectory', 'Transformer',
         'OutputFormat', 'WriteOutputDict', 'Name',
@@ -139,15 +140,18 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         if key not in available_keys:
             raise KeyError(f"Unknown Option {key} in the config")
 
+    # Check General block option values
+    if 'Delivery' in config['General'].keys():
+        if config['General']['Delivery'] not in [
+                'localpath, localcache', 'objectstore']:
+            raise ValueError(
+                f"Unsupported delivery option: {config['General']['Delivery']}"
+                f" - supported options: LocalPath, LocalCache, ObjectStore"
+                )
+
     if ('ServiceXName' not in config['General'].keys()) and \
             ('ServiceXBackendName' not in config['General'].keys()):
         raise KeyError("Option 'ServiceXName' is required in General block")
-
-    # if 'Transformer' not in config['General'].keys():
-    #     raise KeyError("Option 'Transformer' is required in General block")
-
-    # if 'OutputDirectory' not in config['General'].keys():
-    #     raise KeyError("OutputDirectory is required")
 
     if 'OutputFormat' not in config['General'].keys():
         raise KeyError("OutputFormat is required")
