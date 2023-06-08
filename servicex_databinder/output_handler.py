@@ -52,7 +52,7 @@ class OutputHandler():
             delivery_info = (f"  {req['Sample']} | "
                              f"{req['tree']} | "
                              f"{str(req['dataset'])[:100]}")
-        elif req['codegen'] == "atlasr21":
+        elif req['codegen'] == "atlasr21" or req['codegen'] == "python":
             target_path = Path(self.output_path, req['Sample'])
             delivery_info = (f"  {req['Sample']} | "
                              f"{str(req['dataset'])[:100]}")
@@ -116,7 +116,7 @@ class OutputHandler():
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             paths_in_output_dict = \
                 self.out_paths_dict[req['Sample']][req['tree']]
-        elif req['codegen'] == "atlasr21":
+        elif req['codegen'] == "atlasr21" or req['codegen'] == "python":
             target_path = Path(self.output_path, req['Sample'])
             paths_in_output_dict = self.out_paths_dict[req['Sample']]
 
@@ -139,7 +139,7 @@ class OutputHandler():
 
         if req['codegen'] == "uproot":
             self.out_paths_dict[req['Sample']][req['tree']] = output_dict
-        elif req['codegen'] == "atlasr21":
+        elif req['codegen'] == "atlasr21" or req['codegen'] == "python":
             self.out_paths_dict[req['Sample']] = output_dict
 
     def add_local_output_paths_dict(self):

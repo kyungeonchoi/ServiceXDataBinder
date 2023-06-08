@@ -36,7 +36,7 @@ class DataBinderDataset:
     async def deliver_and_copy(self, req, delivery_setting):
         if req['codegen'] == "uproot":
             title = f"{req['Sample']} - {req['tree']}"
-        elif req['codegen'] == "atlasr21":
+        elif req['codegen'] == "atlasr21" or req['codegen'] == "python":
             title = f"{req['Sample']}"
 
         if self._progresbar:
