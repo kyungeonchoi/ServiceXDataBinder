@@ -46,7 +46,7 @@ class OutputHandler():
             self.output_path = Path('ServiceXData').absolute()
             self.output_path.mkdir(parents=True, exist_ok=True)
 
-    def copy_to_target(self, req, files):
+    def copy_to_target(self, delivery_setting, req, files):
         if req['codegen'] == "uproot":
             target_path = Path(self.output_path, req['Sample'], req['tree'])
             delivery_info = (f"  {req['Sample']} | "
@@ -57,31 +57,36 @@ class OutputHandler():
             delivery_info = (f"  {req['Sample']} | "
                              f"{str(req['dataset'])[:100]}")
 
-        if target_path.exists():
-            servicex_files = {Path(file).name for file in files}
-            local_files = {
-                Path(file).name for file in list(target_path.glob("*"))
-                }
-            servicex_data_path = Path(files[0]).parents[0]
-            # one RucioDID for this sample and files are already there
-            if servicex_files == local_files:
-                log.info(f"{delivery_info} is already delivered")
-            else:
-                # copy files in servicex but not in local
-                files_not_in_local = servicex_files.difference(local_files)
-                if files_not_in_local:
-                    for file in files_not_in_local:
-                        copy(Path(servicex_data_path, file),
-                             Path(target_path, file))
-                    log.info(f"{delivery_info} is delivered")
-                else:
+        if delivery_setting == 1 or delivery_setting == 2:
+            if target_path.exists():
+                servicex_files = {Path(file).name for file in files}
+                local_files = {
+                    Path(file).name for file in list(target_path.glob("*"))
+                    }
+                servicex_data_path = Path(files[0]).parents[0]
+                # one RucioDID for this sample and files are already there
+                if servicex_files == local_files:
                     log.info(f"{delivery_info} is already delivered")
-        else:
-            target_path.mkdir(parents=True, exist_ok=True)
-            for file in files:
-                outfile = Path(target_path, Path(file).name)
-                copy(file, outfile)
-            log.info(f"{delivery_info} is delivered")
+                else:
+                    # copy files in servicex but not in local
+                    files_not_in_local = servicex_files.difference(local_files)
+                    if files_not_in_local:
+                        for file in files_not_in_local:
+                            copy(Path(servicex_data_path, file),
+                                 Path(target_path, file))
+                        log.info(f"{delivery_info} is delivered")
+                    else:
+                        log.info(f"{delivery_info} is already delivered")
+            else:
+                target_path.mkdir(parents=True, exist_ok=True)
+                for file in files:
+                    outfile = Path(target_path, Path(file).name)
+                    copy(file, outfile)
+                log.info(f"{delivery_info} is delivered")
+        elif delivery_setting == 3 or delivery_setting == 4:
+            log.info(f"{delivery_info} is cached locally")
+        elif delivery_setting == 5 or delivery_setting == 6:
+            log.info(f"{delivery_info} is available at the object store")
 
     def parquet_to_root(self, tree_name, pq_file, root_file):
         """
@@ -160,7 +165,7 @@ class OutputHandler():
 
     def write_output_paths_dict(self, out_paths_dict):
         """
-        Write yaml of output dict
+        Write yaml of output paths
         """
         if 'WriteOutputDict' in self._config['General'].keys():
             file_out_paths = \

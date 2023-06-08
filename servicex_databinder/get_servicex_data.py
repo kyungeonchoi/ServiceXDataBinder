@@ -23,12 +23,6 @@ class DataBinderDataset:
             = self._config.get('General')['OutputFormat'].lower()
         self.transformerImage = None
         self.output_handler = OutputHandler(config)
-        self.output_path = self.output_handler.output_path
-        self.out_paths_dict = self.output_handler.out_paths_dict
-        self.update_out_paths_dict \
-            = self.output_handler.update_output_paths_dict
-        self.add_local_output_paths_dict \
-            = self.output_handler.add_local_output_paths_dict
         self.ignoreCache = False
         if 'IgnoreServiceXCache' in self._config['General'].keys():
             self.ignoreCache = self._config['General']['IgnoreServiceXCache']
@@ -39,30 +33,11 @@ class DataBinderDataset:
                 "endpoint"
                 )
 
-    async def deliver_and_copy(self, req):
+    async def deliver_and_copy(self, req, delivery_setting):
         if req['codegen'] == "uproot":
             title = f"{req['Sample']} - {req['tree']}"
         elif req['codegen'] == "atlasr21":
             title = f"{req['Sample']}"
-
-        if self._outputformat == "parquet" and \
-                self._config['General']['Delivery'] == "localpath":
-            delivery_setting = 1
-        elif self._outputformat == "root" and \
-                self._config['General']['Delivery'] == "localpath":
-            delivery_setting = 2
-        elif self._outputformat == "parquet" and \
-                self._config['General']['Delivery'] == "localcache":
-            delivery_setting = 3
-        elif self._outputformat == "root" and \
-                self._config['General']['Delivery'] == "localcache":
-            delivery_setting = 4
-        elif self._outputformat == "parquet" and \
-                self._config['General']['Delivery'] == "uri":
-            delivery_setting = 5
-        elif self._outputformat == "root" and \
-                self._config['General']['Delivery'] == "uri":
-            delivery_setting = 6
 
         if self._progresbar:
             callback_factory = None
@@ -115,20 +90,40 @@ class DataBinderDataset:
                         f"{str(req['dataset'])[:100]}")
 
         # Update Outfile paths dictionary
-        self.update_out_paths_dict(req, files, delivery_setting)
+        self.output_handler.update_output_paths_dict(
+            req, files, delivery_setting
+            )
 
-        if delivery_setting == 1 or delivery_setting == 2:
-            self.output_handler.copy_to_target(req, files)
+        self.output_handler.copy_to_target(delivery_setting, req, files)
 
     async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
+
+        if self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "localpath":
+            delivery_setting = 1
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "localpath":
+            delivery_setting = 2
+        elif self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "localcache":
+            delivery_setting = 3
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "localcache":
+            delivery_setting = 4
+        elif self._outputformat == "parquet" and \
+                self._config['General']['Delivery'] == "objectstore":
+            delivery_setting = 5
+        elif self._outputformat == "root" and \
+                self._config['General']['Delivery'] == "objectstore":
+            delivery_setting = 6
 
         self._progresbar = overall_progress_only
 
         tasks = []
 
         for req in self._servicex_requests:
-            tasks.append(self.deliver_and_copy(req))
+            tasks.append(self.deliver_and_copy(req, delivery_setting))
 
         if overall_progress_only:
             barformat = "{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]"
@@ -149,10 +144,13 @@ class DataBinderDataset:
         if overall_progress_only:
             pbar.close()
 
-        self.add_local_output_paths_dict()
+        self.output_handler.add_local_output_paths_dict()
 
-        log.info(f"Delivered at {self.output_path}")
+        if delivery_setting == 1 or delivery_setting == 2:
+            log.info(f"Delivered at {self.output_handler.output_path}")
 
-        self.output_handler.write_output_paths_dict(self.out_paths_dict)
+        self.output_handler.write_output_paths_dict(
+            self.output_handler.out_paths_dict
+            )
 
-        return self.out_paths_dict
+        return self.output_handler.out_paths_dict
