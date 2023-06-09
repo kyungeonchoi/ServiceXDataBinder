@@ -77,7 +77,7 @@ class DataBinderDataset:
                         query,
                         title=title
                         )
-            
+
             # Update Outfile paths dictionary
             self.output_handler.update_output_paths_dict(
                 req, files, delivery_setting
@@ -95,7 +95,7 @@ class DataBinderDataset:
                 return ("  Fail to deliver "
                         f"{req['Sample']} | "
                         f"{str(req['dataset'])[:100]}")
-        
+
     async def get_data(self, overall_progress_only):
         log.info(f"Deliver via ServiceX endpoint: {self.endpoint}")
 
