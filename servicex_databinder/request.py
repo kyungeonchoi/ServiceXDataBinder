@@ -3,6 +3,7 @@ import tcut_to_qastle as tq
 import qastle
 import ast
 import logging
+from base64 import b64encode
 from func_adl_servicex import ServiceXSourceXAOD # NOQA
 from servicex import ServiceXDataset # NOQA
 
@@ -37,11 +38,11 @@ class ServiceXRequest():
 
         if 'RucioDID' in sample.keys():
             dids = sample['RucioDID'].split(',')
-            if sample['Type'] == "uproot":
+            if sample['Transformer'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(dids)} DID(s) and {len(trees)} Tree(s)")
-            elif sample['Type'] == "xaod":
+            else:
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has {len(dids)} DID(s)")
 
@@ -60,12 +61,12 @@ class ServiceXRequest():
         elif 'XRootDFiles' in sample.keys():
             xrootd_filelist = [file.strip()
                                for file in sample['XRootDFiles'].split(",")]
-            if sample['Type'] == "uproot":
+            if sample['Transformer'] == "uproot":
                 trees = sample['Tree'].split(',')
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s) and "
                           f"{len(trees)} Tree(s)")
-            elif sample['Type'] == "xaod":
+            else:
                 trees = ['dummy']
                 log.debug(f"  Sample {sample['Name']} has "
                           f"{len(xrootd_filelist)} file(s)")
@@ -130,3 +131,6 @@ class ServiceXRequest():
                     "Exception occured for the query "
                     f"of Sample {sample['Name']}"
                     )
+        elif sample['Transformer'] == "python":
+            query = sample['Function']
+            return b64encode(query.encode("utf-8")).decode("utf-8")

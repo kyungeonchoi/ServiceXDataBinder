@@ -122,7 +122,7 @@ def _validate_config(config: Dict[str, Any]) -> bool:
         'IgnoreLocalCache', 'Sample', 'RucioDID', 'XRootDFiles', 'Tree',
         'Filter', 'Columns', 'FuncADL', 'LocalPath', 'Definition',
         'ServiceXBackendName', 'IgnoreServiceXCache',
-        'Delivery'
+        'Delivery', 'Function'
         ]
 
     if 'General' not in config.keys() and 'Sample' not in config.keys():
@@ -143,7 +143,7 @@ def _validate_config(config: Dict[str, Any]) -> bool:
     # Check General block option values
     if 'Delivery' in config['General'].keys():
         if config['General']['Delivery'] not in [
-                'localpath, localcache', 'objectstore']:
+                'localpath', 'localcache', 'objectstore']:
             raise ValueError(
                 f"Unsupported delivery option: {config['General']['Delivery']}"
                 f" - supported options: LocalPath, LocalCache, ObjectStore"
