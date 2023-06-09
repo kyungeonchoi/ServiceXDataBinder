@@ -14,7 +14,7 @@ The following table shows supported ServiceX transformers by DataBinder
 | :--- | :---: | :---: | :---: |
 | ROOT Ntuple | func-adl | `uproot` | `root` or `parquet` |
 | ATLAS Release 21 xAOD | func-adl | `atlasr21`| `root` |
-<!-- | ROOT Ntuple | python function | `python`| -->
+| ROOT Ntuple | python function | `python`| `root` or `parquet` |
 
 <!-- [`ServiceX`](https://github.com/ssl-hep/ServiceX) is a scalable HEP event data extraction, transformation and delivery system. 
 
@@ -125,6 +125,15 @@ Sample:
     FuncADL: DEF_Zee_query
   - Name: Background3
     LocalPath: /Users/kchoi/Work/data/background3
+  - Name: Background4
+    Transformer: python
+    RucioDID: user.kchoi:user.kchoi.background4
+    Function: |
+      def run_query(input_filenames=None):
+          import awkward as ak, uproot
+          tree_name = "nominal"
+          o = uproot.lazy({input_filenames:tree_name})
+          return {"nominal: o}
 
 Definition:
   DEF_ttH_nominal_query: "Where(lambda e: e.met_met>150e3). \
